@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<title>Squad Pick — Decide together. Hang out more.</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<style>
+:root{
+  --bg:#0b0f1a; --bg2:#101627; --card:rgba(255,255,255,.055); --card2:rgba(255,255,255,.09);
+  --border:rgba(255,255,255,.1); --text:#eef1f8; --muted:#8b93a7;
+  --accent:#7c5cff; --accent2:#00d4ff; --good:#2dd4a7; --warn:#ffb545; --bad:#ff5c7a;
+  --grad:linear-gradient(135deg,#7c5cff 0%,#00d4ff 100%);
+  --radius:18px; --nav-h:64px;
+}
+[data-theme="light"]{
+  --bg:#f2f4fb; --bg2:#ffffff; --card:rgba(20,25,50,.05); --card2:rgba(20,25,50,.08);
+  --border:rgba(20,25,50,.12); --text:#171c2e; --muted:#5d6579;
+}
+[data-accent="sunset"]{--accent:#ff6b4a;--accent2:#ffb545;--grad:linear-gradient(135deg,#ff6b4a,#ffb545)}
+[data-accent="mint"]{--accent:#2dd4a7;--accent2:#00d4ff;--grad:linear-gradient(135deg,#2dd4a7,#00d4ff)}
+[data-accent="rose"]{--accent:#ff5c7a;--accent2:#c86bff;--grad:linear-gradient(135deg,#ff5c7a,#c86bff)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  background:var(--bg); color:var(--text); overflow:hidden;
+}
+body::before{
+  content:''; position:fixed; inset:-40%; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(38% 38% at 22% 24%, color-mix(in srgb,var(--accent) 22%, transparent) 0%, transparent 70%),
+    radial-gradient(34% 34% at 80% 12%, color-mix(in srgb,var(--accent2) 16%, transparent) 0%, transparent 70%),
+    radial-gradient(40% 40% at 70% 88%, color-mix(in srgb,var(--accent) 12%, transparent) 0%, transparent 70%);
+  animation:drift 24s ease-in-out infinite alternate;
+}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(3%,4%) scale(1.06)}}
+#app{position:relative;z-index:1;max-width:520px;height:100dvh;margin:0 auto;display:flex;flex-direction:column;background:color-mix(in srgb,var(--bg2) 55%, transparent);backdrop-filter:blur(24px);border-left:1px solid var(--border);border-right:1px solid var(--border)}
+/* ---------- views ---------- */
+.view{display:none;flex:1;overflow-y:auto;padding:20px 18px calc(var(--nav-h) + 26px);scrollbar-width:thin}
+.view.active{display:block;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
+h1{font-size:26px;font-weight:800;letter-spacing:-.5px}
+h2{font-size:19px;font-weight:700;letter-spacing:-.3px}
+h3{font-size:15px;font-weight:700}
+.sub{color:var(--muted);font-size:13.5px;line-height:1.5}
+.grad-text{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* ---------- components ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;transition:.2s}
+.card.tap:hover{background:var(--card2);cursor:pointer;transform:translateY(-1px)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:15px;border-radius:14px;padding:14px 20px;transition:.18s;color:#fff;background:var(--grad);width:100%;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 35%, transparent)}
+.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--card2);color:var(--text);box-shadow:none;border:1px solid var(--border)}
+.btn.small{width:auto;padding:9px 14px;font-size:13px;border-radius:11px}
+.btn.danger{background:linear-gradient(135deg,#ff5c7a,#ff8845)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+input,select,textarea{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:13px;color:var(--text);padding:13px 14px;font-size:15px;font-family:inherit;outline:none;transition:.2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:var(--card2)}
+label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.6px}
+.row{display:flex;gap:10px;align-items:center}
+.spread{display:flex;justify-content:space-between;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;background:var(--card);border:1.5px solid var(--border);font-size:13.5px;font-weight:600;cursor:pointer;transition:.15s;user-select:none}
+.chip:hover{background:var(--card2)}
+.chip.on{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 40%, transparent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px;background:var(--card2);color:var(--muted);letter-spacing:.4px}
+.badge.pro{background:var(--grad);color:#fff}
+.badge.good{background:color-mix(in srgb,var(--good) 18%, transparent);color:var(--good)}
+.badge.warn{background:color-mix(in srgb,var(--warn) 18%, transparent);color:var(--warn)}
+.avatar{width:44px;height:44px;border-radius:14px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border)}
+.avatar.lg{width:64px;height:64px;font-size:32px;border-radius:20px}
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty .big{font-size:52px;margin-bottom:12px;display:block}
+/* ---------- top bar ---------- */
+#topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 18px 8px}
+#topbar .logo{font-size:20px;font-weight:900;letter-spacing:-.4px;display:flex;align-items:center;gap:8px}
+/* ---------- bottom nav ---------- */
+#nav{position:absolute;bottom:0;left:0;right:0;height:var(--nav-h);display:flex;background:color-mix(in srgb,var(--bg2) 88%, transparent);backdrop-filter:blur(20px);border-top:1px solid var(--border);z-index:40}
+#nav button{flex:1;background:none;border:none;color:var(--muted);font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;transition:.15s}
+#nav button .ico{font-size:21px;transition:.18s}
+#nav button.on{color:var(--text)}
+#nav button.on .ico{transform:translateY(-2px) scale(1.12)}
+#nav button.on::after{content:'';width:18px;height:3px;border-radius:3px;background:var(--grad);margin-top:1px}
+/* ---------- modal ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(5,8,16,.66);backdrop-filter:blur(6px);z-index:60;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.open{display:flex;animation:fadeUp .2s ease}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:26px 26px 0 0;width:100%;max-width:520px;max-height:92dvh;overflow-y:auto;padding:22px 20px 30px;position:relative}
+.modal .grab{width:42px;height:5px;border-radius:5px;background:var(--border);margin:0 auto 16px}
+.modal .x{position:absolute;top:16px;right:16px;background:var(--card2);border:none;color:var(--text);width:32px;height:32px;border-radius:10px;font-size:15px;cursor:pointer}
+/* ---------- chat ---------- */
+#chatScroll{display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
+.msg{max-width:82%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.45;animation:pop .18s ease}
+.msg.me{align-self:flex-end;background:var(--grad);color:#fff;border-bottom-right-radius:5px}
+.msg.them{align-self:flex-start;background:var(--card2);border:1px solid var(--border);border-bottom-left-radius:5px}
+.msg .who{font-size:11px;font-weight:800;opacity:.75;margin-bottom:3px}
+.msg.ai{align-self:flex-start;background:color-mix(in srgb,var(--accent) 14%, var(--bg2));border:1.5px solid color-mix(in srgb,var(--accent) 45%, transparent);border-bottom-left-radius:5px}
+.pollCard,.pickCard{align-self:stretch;background:var(--card);border:1.5px solid var(--border);border-radius:16px;padding:14px;animation:pop .2s ease}
+.pollOpt{display:flex;align-items:center;gap:9px;padding:9px 11px;border:1.5px solid var(--border);border-radius:12px;margin-top:8px;cursor:pointer;transition:.15s;font-size:14px;font-weight:600}
+.pollOpt:hover{background:var(--card2)}
+.pollOpt .bar{position:relative;flex:1}
+.pollOpt.win{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%, transparent)}
+.voteDots{display:flex;gap:3px;flex-wrap:wrap}
+.voteDots span{font-size:15px}
+#chatInputWrap{position:sticky;bottom:0;background:color-mix(in srgb,var(--bg2) 92%, transparent);backdrop-filter:blur(14px);padding:10px 0 4px;display:flex;gap:8px;align-items:flex-end}
+#chatInputWrap input{flex:1}
+.iconBtn{width:46px;height:46px;flex-shrink:0;border-radius:13px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:19px;cursor:pointer;transition:.15s}
+.iconBtn:hover{background:var(--card)}
+.iconBtn.grad{background:var(--grad);border:none;color:#fff}
+/* ---------- misc ---------- */
+.statGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 10px;text-align:center}
+.stat .n{font-size:22px;font-weight:900;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.stat .l{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px}
+.seg{display:flex;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:4px;gap:4px;margin-bottom:14px}
+.seg button{flex:1;border:none;background:none;color:var(--muted);font-family:inherit;font-weight:700;font-size:13px;padding:9px 4px;border-radius:10px;cursor:pointer;transition:.15s}
+.seg button.on{background:var(--grad);color:#fff}
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:12px 20px;font-size:14px;font-weight:700;z-index:100;transition:.3s cubic-bezier(.2,.9,.3,1.2);box-shadow:0 12px 40px rgba(0,0,0,.4);max-width:88%;text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.progressDots{display:flex;gap:7px;justify-content:center;margin:18px 0}
+.progressDots span{width:8px;height:8px;border-radius:99px;background:var(--border);transition:.25s}
+.progressDots span.on{width:26px;background:var(--grad)}
+.memPhoto{width:100%;height:150px;object-fit:cover;border-radius:12px;margin-top:10px}
+.hr{height:1px;background:var(--border);margin:16px 0}
+.linkish{color:var(--accent2);font-weight:700;cursor:pointer;font-size:13.5px}
+#map{width:100%;height:210px;border-radius:16px;border:1px solid var(--border);margin-bottom:12px;background:var(--card)}
+.placeImg{width:54px;height:54px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:26px;background:var(--card2);border:1px solid var(--border)}
+.wrapCard{background:var(--grad);border-radius:24px;padding:26px 22px;color:#fff;text-align:center;position:relative;overflow:hidden}
+.wrapCard::before{content:'';position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 0%,rgba(255,255,255,.25),transparent)}
+.emojiGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:8px}
+.emojiGrid button{background:none;border:none;font-size:24px;cursor:pointer;padding:6px;border-radius:10px;transition:.12s}
+.emojiGrid button:hover{background:var(--card2);transform:scale(1.2)}
+.keyDot{width:9px;height:9px;border-radius:99px;display:inline-block;margin-right:7px}
+.payApple{background:#000 !important;box-shadow:none !important;font-family:inherit}
+.payG{background:#fff !important;color:#3c4043 !important;box-shadow:none !important;border:1px solid #dadce0 !important}
+.payPP{background:#0070ba !important;box-shadow:none !important}
+.payCash{background:#00d632 !important;box-shadow:none !important}
+@media(min-width:560px){ body{display:flex;align-items:center;justify-content:center} #app{height:min(880px,94dvh);border-radius:34px;border:1px solid var(--border);box-shadow:0 40px 120px rgba(0,0,0,.5);overflow:hidden} #nav{position:absolute} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar" style="display:none">
+    <div class="logo">🎯 <span class="grad-text">Squad Pick</span></div>
+    <div class="row" style="gap:8px">
+      <span id="proBadge" class="badge">FREE</span>
+      <button class="iconBtn" style="width:38px;height:38px;font-size:16px" onclick="openSettings()">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ============ AUTH ============ -->
+  <div class="view" id="view-auth">
+    <div style="text-align:center;margin:8vh 0 30px">
+      <div style="font-size:74px;animation:pop .5s ease">🎯</div>
+      <h1 style="font-size:34px;margin-top:10px">Squad <span class="grad-text">Pick</span></h1>
+      <p class="sub" style="margin-top:8px">Stop the "idk, what do you wanna do?" loop.<br>AI picks the perfect hangout for your crew.</p>
+    </div>
+    <div class="card" style="padding:20px">
+      <div class="seg"><button id="segSignup" class="on" onclick="authMode('signup')">Sign up</button><button id="segLogin" onclick="authMode('login')">Log in</button></div>
+      <label>Your name</label><input id="authName" placeholder="e.g. Bob" autocomplete="name">
+      <label>Email</label><input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email">
+      <div style="margin-top:20px"><button class="btn" onclick="doAuth()">Continue →</button></div>
+      <p class="sub" style="text-align:center;margin-top:12px;font-size:12px">Your data stays on this device until you connect a backend.</p>
+    </div>
+  </div>
+
+  <!-- ============ ONBOARDING / PERSONALIZATION ============ -->
+  <div class="view" id="view-onboard">
+    <div class="progressDots" id="obDots"><span class="on"></span><span></span><span></span><span></span></div>
+    <div id="obStep0">
+      <h1>About <span class="grad-text">you</span></h1>
+      <p class="sub" style="margin-top:6px">Squad Pick learns you, so every suggestion actually fits.</p>
+      <label>Age</label><input id="pAge" type="number" min="13" max="99" placeholder="e.g. 24">
+      <label>Gender</label>
+      <div class="chips" id="pGender"></div>
+      <label>Pick your avatar</label>
+      <div class="chips" id="pAvatar"></div>
+    </div>
+    <div id="obStep1" style="display:none">
+      <h1>What do you <span class="grad-text">love?</span></h1>
+      <p class="sub" style="margin-top:6px">Choose at least 3 — the AI uses these to craft picks.</p>
+      <div class="chips" id="pInterests" style="margin-top:16px"></div>
+    </div>
+    <div id="obStep2" style="display:none">
+      <h1>Your <span class="grad-text">vibe</span></h1>
+      <label>Typical budget for a hangout</label>
+      <div class="chips" id="pBudget"></div>
+      <label>Energy level</label>
+      <div class="chips" id="pVibe"></div>
+      <label>Food notes (optional)</label><input id="pDiet" placeholder="e.g. halal, vegetarian, no seafood">
+      <label>Home city / area</label><input id="pCity" placeholder="e.g. Philadelphia, PA">
+    </div>
+    <div id="obStep3" style="display:none;text-align:center">
+      <div style="font-size:64px;margin:6vh 0 14px">🚀</div>
+      <h1>You're <span class="grad-text">in, </span><span id="obName"></span>!</h1>
+      <p class="sub" style="margin:10px 0 26px">Create your first squad, invite the crew,<br>and let the AI end the group-chat debate.</p>
+    </div>
+    <div style="margin-top:26px" class="row">
+      <button class="btn ghost" id="obBack" onclick="obNav(-1)" style="display:none;width:38%">← Back</button>
+      <button class="btn" id="obNext" onclick="obNav(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- ============ HOME ============ -->
+  <div class="view" id="view-home">
+    <div class="spread">
+      <div><h1 id="homeGreet">Hey 👋</h1><p class="sub" id="homeSub">Ready to make plans?</p></div>
+      <div class="avatar lg" id="homeAvatar" onclick="nav('profile')" style="cursor:pointer">🙂</div>
+    </div>
+    <div class="statGrid" style="margin:18px 0 14px">
+      <div class="stat"><div class="n" id="stSquads">0</div><div class="l">SQUADS</div></div>
+      <div class="stat"><div class="n" id="stPicks">0</div><div class="l">AI PICKS</div></div>
+      <div class="stat"><div class="n" id="stMems">0</div><div class="l">MEMORIES</div></div>
+    </div>
+    <button class="btn" onclick="quickPick()" style="margin-bottom:10px">🎯 Instant AI Pick</button>
+    <div class="row" style="margin-bottom:18px">
+      <button class="btn ghost" onclick="openNewSquad()" style="flex:1">＋ New squad</button>
+      <button class="btn ghost" onclick="nav('discover')" style="flex:1">🧭 Discover</button>
+    </div>
+    <div id="homeKeys"></div>
+    <div class="spread" style="margin:8px 0 10px"><h2>Your squads</h2><span class="linkish" onclick="nav('squads')">See all →</span></div>
+    <div id="homeSquads"></div>
+    <div id="homeUpsell"></div>
+  </div>
+
+  <!-- ============ SQUADS LIST ============ -->
+  <div class="view" id="view-squads">
+    <div class="spread"><h1>Squads</h1><button class="btn small" onclick="openNewSquad()">＋ New</button></div>
+    <p class="sub" id="squadCount" style="margin:4px 0 16px"></p>
+    <div id="squadList"></div>
+  </div>
+
+  <!-- ============ SQUAD DETAIL ============ -->
+  <div class="view" id="view-squad">
+    <div class="spread" style="margin-bottom:4px">
+      <div class="row">
+        <button class="iconBtn" style="width:38px;height:38px" onclick="nav('squads')">←</button>
+        <div class="avatar" id="sqEmoji">🎉</div>
+        <div><h2 id="sqName">Squad</h2><p class="sub" id="sqMembers" style="font-size:12px"></p></div>
+      </div>
+      <button class="iconBtn" style="width:38px;height:38px" onclick="openSquadOpts()">⋯</button>
+    </div>
+    <div class="seg" style="margin-top:12px">
+      <button id="tabChat" class="on" onclick="sqTab('chat')">💬 Chat</button>
+      <button id="tabPlan" onclick="sqTab('plan')">🎯 Plan</button>
+      <button id="tabMems" onclick="sqTab('mems')">📁 Memories</button>
+    </div>
+    <div id="sqChatPane">
+      <div id="chatScroll"></div>
+      <div id="chatInputWrap">
+        <button class="iconBtn" title="Start a poll" onclick="openPollModal()">📊</button>
+        <input id="chatText" placeholder="Message… (@ai to ask the AI)" onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="iconBtn grad" onclick="sendMsg()">➤</button>
+      </div>
+    </div>
+    <div id="sqPlanPane" style="display:none">
+      <div class="card" style="text-align:center;padding:24px">
+        <div style="font-size:44px">🎯</div>
+        <h2 style="margin:8px 0 4px">AI Hangout Picker</h2>
+        <p class="sub">Blends everyone's tastes, your budget, past favorites & your city — then picks 3 perfect options.</p>
+        <div style="margin-top:16px"><button class="btn" onclick="genPicks()">✨ Generate picks</button></div>
+      </div>
+      <div id="pickResults"></div>
+    </div>
+    <div id="sqMemsPane" style="display:none">
+      <button class="btn ghost" onclick="openMemModal(currentSquad)">＋ Log a hangout for this squad</button>
+      <div id="sqMemList" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- ============ DISCOVER ============ -->
+  <div class="view" id="view-discover">
+    <h1>Discover</h1>
+    <p class="sub" style="margin:4px 0 14px">Find spots near you for the next hangout.</p>
+    <div id="mapWrap"></div>
+    <div class="chips" id="discoverCats" style="margin-bottom:14px"></div>
+    <div id="placeList"></div>
+  </div>
+
+  <!-- ============ MEMORIES ============ -->
+  <div class="view" id="view-memories">
+    <div class="spread"><h1>Memories</h1><button class="btn small" onclick="openMemModal()">＋ Log hangout</button></div>
+    <p class="sub" style="margin:4px 0 14px">Your past hangouts, all in one vault. 📁</p>
+    <input id="memSearch" placeholder="🔍 Search memories…" oninput="renderMemories()" style="margin-bottom:14px">
+    <div id="memList"></div>
+  </div>
+
+  <!-- ============ PROFILE ============ -->
+  <div class="view" id="view-profile">
+    <div class="row" style="gap:14px">
+      <div class="avatar lg" id="profAvatar">🙂</div>
+      <div style="flex:1"><h1 id="profName">You</h1><p class="sub" id="profMeta"></p></div>
+      <span id="profBadge" class="badge">FREE</span>
+    </div>
+    <div class="statGrid" style="margin:18px 0">
+      <div class="stat"><div class="n" id="pfPicks">0</div><div class="l">PICKS</div></div>
+      <div class="stat"><div class="n" id="pfMems">0</div><div class="l">HANGOUTS</div></div>
+      <div class="stat"><div class="n" id="pfStreak">0</div><div class="l">DAY STREAK</div></div>
+    </div>
+    <div id="profUpsell"></div>
+    <div class="card tap" onclick="openWrapped()"><div class="spread"><div class="row"><span style="font-size:22px">🎁</span><div><h3>Your Squad Wrapped</h3><p class="sub" style="font-size:12px">Monthly recap of your crew's stats</p></div></div><span>→</span></div></div>
+    <div class="card tap" onclick="openPersonalization()"><div class="spread"><div class="row"><span style="font-size:22px">🧬</span><div><h3>Personalization</h3><p class="sub" style="font-size:12px">Age, interests, budget, vibe — tune your AI</p></div></div><span>→</span></div></div>
+    <div class="card tap" onclick="openSettings()"><div class="spread"><div class="row"><span style="font-size:22px">⚙️</span><div><h3>Settings & API keys</h3><p class="sub" style="font-size:12px">Claude AI, Google Maps, theme, backup</p></div></div><span>→</span></div></div>
+    <div class="card tap" onclick="inviteFriends()"><div class="spread"><div class="row"><span style="font-size:22px">📇</span><div><h3>Invite from contacts</h3><p class="sub" style="font-size:12px">Links to your Apple/Google contacts (with permission) to invite the crew</p></div></div><span>→</span></div></div>
+    <div class="card tap" onclick="shareApp()"><div class="spread"><div class="row"><span style="font-size:22px">📣</span><div><h3>Share Squad Pick</h3><p class="sub" style="font-size:12px">Invite friends — grow the movement</p></div></div><span>→</span></div></div>
+    <div class="card tap" onclick="logout()"><div class="spread"><div class="row"><span style="font-size:22px">🚪</span><h3>Log out</h3></div><span>→</span></div></div>
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:11.5px">Squad Pick v2.0 · built with Claude Fable 5</p>
+  </div>
+
+  <!-- bottom nav -->
+  <div id="nav" style="display:none">
+    <button data-v="home" class="on" onclick="nav('home')"><span class="ico">🏠</span>Home</button>
+    <button data-v="squads" onclick="nav('squads')"><span class="ico">👥</span>Squads</button>
+    <button data-v="discover" onclick="nav('discover')"><span class="ico">🧭</span>Discover</button>
+    <button data-v="memories" onclick="nav('memories')"><span class="ico">📁</span>Memories</button>
+    <button data-v="profile" onclick="nav('profile')"><span class="ico">🙂</span>Profile</button>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-bg" id="mNewSquad"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mNewSquad')">✕</button>
+  <h2>New squad</h2>
+  <label>Squad name</label><input id="nsName" placeholder="e.g. The Day Ones">
+  <label>Pick an emoji</label><div class="emojiGrid" id="nsEmojis"></div>
+  <label>Members (besides you)</label>
+  <div class="row"><input id="nsMember" placeholder="Friend's name" onkeydown="if(event.key==='Enter')addNsMember()"><button class="iconBtn" onclick="addNsMember()">＋</button></div>
+  <button class="btn ghost small" style="margin-top:10px" onclick="addMembersFromContacts()">📇 Add from your contacts</button>
+  <div class="chips" id="nsMemberList" style="margin-top:10px"></div>
+  <div style="margin-top:22px"><button class="btn" onclick="createSquad()">Create squad 🎉</button></div>
+</div></div>
+
+<div class="modal-bg" id="mPoll"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mPoll')">✕</button>
+  <h2>Start a poll</h2>
+  <label>Question</label><input id="pollQ" placeholder="e.g. Where are we eating Friday?">
+  <label>Options</label>
+  <div id="pollOpts"></div>
+  <button class="btn ghost small" style="margin-top:10px" onclick="addPollOpt()">＋ Add option</button>
+  <div style="margin-top:20px"><button class="btn" onclick="createPoll()">Launch poll 📊</button></div>
+</div></div>
+
+<div class="modal-bg" id="mMem"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mMem')">✕</button>
+  <h2>Log a hangout</h2>
+  <label>Title</label><input id="memTitle" placeholder="e.g. Bowling night 🎳">
+  <label>Squad</label><select id="memSquad"></select>
+  <label>Date</label><input id="memDate" type="date">
+  <label>How was it?</label>
+  <div class="chips" id="memRating"></div>
+  <label>Notes</label><textarea id="memNotes" rows="2" placeholder="Best moments, inside jokes…"></textarea>
+  <label>Photo (optional)</label><input id="memPhoto" type="file" accept="image/*">
+  <div style="margin-top:20px"><button class="btn" onclick="saveMemory()">Save to vault 📁</button></div>
+</div></div>
+
+<div class="modal-bg" id="mPaywall"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mPaywall')">✕</button>
+  <div style="text-align:center">
+    <div style="font-size:52px">👑</div>
+    <h1 style="margin:6px 0">Squad Pick <span class="grad-text">Pro</span></h1>
+    <p class="sub">Unlimited squads · Unlimited AI picks · Wrapped recaps · Priority features</p>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="gap:10px"><span style="font-size:18px">⭐</span><p class="sub" style="color:var(--text)"><b>4.8</b> · loved by planners everywhere</p></div>
+    <div class="hr"></div>
+    <p class="sub">“Ended a 45-minute group chat debate in one tap.” — every friend group, eventually</p>
+  </div>
+  <div class="card tap" onclick="selPlan(this,'yearly')" style="border-color:var(--accent)"><div class="spread"><div><h3>Yearly · $39.99</h3><p class="sub" style="font-size:12px">$3.33/mo — save 33%</p></div><span class="badge pro">7-DAY FREE TRIAL</span></div></div>
+  <div class="card tap" onclick="selPlan(this,'monthly')"><div class="spread"><div><h3>Monthly · $4.99</h3><p class="sub" style="font-size:12px">Cancel anytime</p></div></div></div>
+  <label style="text-align:center">Pay with</label>
+  <div class="row" style="margin-bottom:8px">
+    <button class="btn payApple" style="flex:1" onclick="payVia('applepay')"> Pay</button>
+    <button class="btn payG" style="flex:1" onclick="payVia('gpay')"><b style="color:#4285f4">G</b>&nbsp;Pay</button>
+  </div>
+  <div class="row">
+    <button class="btn payPP" style="flex:1" onclick="payVia('paypal')"><i>Pay</i>Pal</button>
+    <button class="btn payCash" style="flex:1" onclick="payVia('cashapp')">＄ Cash App</button>
+  </div>
+  <p class="sub" style="text-align:center;margin-top:10px;font-size:11.5px">Secure checkout opens in a new tab — the same real Stripe/PayPal payment sheets other apps use.<br><span class="linkish" onclick="restorePurchase()">Restore purchase</span> · <span class="linkish" onclick="purchase()">Demo unlock (testing)</span></p>
+</div></div>
+
+<div class="modal-bg" id="mSettings"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mSettings')">✕</button>
+  <h2>Settings</h2>
+  <label>Theme</label>
+  <div class="chips"><span class="chip" id="thDark" onclick="setTheme('dark')">🌙 Dark</span><span class="chip" id="thLight" onclick="setTheme('light')">☀️ Light</span></div>
+  <label>Accent</label>
+  <div class="chips">
+    <span class="chip" onclick="setAccent('')">💜 Violet</span><span class="chip" onclick="setAccent('sunset')">🧡 Sunset</span>
+    <span class="chip" onclick="setAccent('mint')">🌿 Mint</span><span class="chip" onclick="setAccent('rose')">🌸 Rose</span>
+  </div>
+  <div class="hr"></div>
+  <h3><span class="keyDot" id="dotClaude" style="background:var(--bad)"></span>Claude AI key</h3>
+  <p class="sub" style="margin:4px 0 8px">Powers real AI picks & @ai chat replies. Get one at console.anthropic.com.</p>
+  <input id="setClaude" type="password" placeholder="sk-ant-…">
+  <label>Claude model</label><input id="setModel" placeholder="claude-sonnet-5">
+  <div class="hr"></div>
+  <h3><span class="keyDot" id="dotMaps" style="background:var(--bad)"></span>Google Maps key</h3>
+  <p class="sub" style="margin:4px 0 8px">Powers live Discover map & real places near you.</p>
+  <input id="setMaps" type="password" placeholder="AIza…">
+  <div class="hr"></div>
+  <h3><span class="keyDot" id="dotPay" style="background:var(--bad)"></span>Payments 💳</h3>
+  <p class="sub" style="margin:4px 0 8px">Create free Payment Links at <b>stripe.com</b> (they automatically offer Apple Pay, Google Pay, Cash App & cards to your buyers). Paste them here and the paywall takes real money into your account.</p>
+  <input id="setPayM" placeholder="Stripe link — monthly $4.99 (https://buy.stripe.com/…)">
+  <input id="setPayY" style="margin-top:8px" placeholder="Stripe link — yearly $39.99">
+  <input id="setPaypal" style="margin-top:8px" placeholder="PayPal.Me link (https://paypal.me/yourname)">
+  <input id="setCashtag" style="margin-top:8px" placeholder="Cash App cashtag (e.g. $davinm)">
+  <div style="margin-top:16px"><button class="btn" onclick="saveSettings()">Save settings</button></div>
+  <div class="hr"></div>
+  <div class="row">
+    <button class="btn ghost" style="flex:1" onclick="exportData()">⬇ Backup data</button>
+    <button class="btn ghost" style="flex:1" onclick="document.getElementById('importFile').click()">⬆ Restore</button>
+  </div>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  <button class="btn danger" style="margin-top:10px" onclick="wipeData()">Erase everything</button>
+</div></div>
+
+<div class="modal-bg" id="mWrapped"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mWrapped')">✕</button>
+  <div id="wrapInner"></div>
+</div></div>
+
+<div class="modal-bg" id="mPerso"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mPerso')">✕</button>
+  <h2>Personalization</h2>
+  <p class="sub" style="margin-top:4px">The more accurate this is, the smarter your picks.</p>
+  <label>Age</label><input id="epAge" type="number" min="13" max="99">
+  <label>Gender</label><div class="chips" id="epGender"></div>
+  <label>Interests</label><div class="chips" id="epInterests"></div>
+  <label>Budget</label><div class="chips" id="epBudget"></div>
+  <label>Energy</label><div class="chips" id="epVibe"></div>
+  <label>Food notes</label><input id="epDiet">
+  <label>City</label><input id="epCity">
+  <div style="margin-top:20px"><button class="btn" onclick="savePersonalization()">Save</button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ================= STATE ================= */
+const DBKEY='squadpick_v2';
+const DEF={user:null,squads:[],memories:[],tastes:{loved:{},passed:{}},settings:{theme:'dark',accent:'',claudeKey:'',mapsKey:'',model:'claude-sonnet-5'},stats:{picks:0,shares:0,lastOpen:null,streak:1},pro:false,plan:'yearly',ratingAsked:false};
+let S=load();
+function load(){try{const raw=localStorage.getItem(DBKEY);if(raw){const d=JSON.parse(raw);return Object.assign(structuredClone(DEF),d,{settings:Object.assign(structuredClone(DEF.settings),d.settings||{}),stats:Object.assign(structuredClone(DEF.stats),d.stats||{}),tastes:Object.assign(structuredClone(DEF.tastes),d.tastes||{})});}}catch(e){console.warn(e)}return structuredClone(DEF)}
+function save(){localStorage.setItem(DBKEY,JSON.stringify(S))}
+const $=id=>document.getElementById(id);
+const uid=()=>Math.random().toString(36).slice(2,10);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400)}
+function track(ev,props){console.log('[analytics]',ev,props||{}) /* swap for mixpanel.track(ev,props) */}
+function openModal(id){$(id).classList.add('open')}
+function closeModal(id){$(id).classList.remove('open')}
+const fmtDate=d=>new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+
+/* ================= CONSTANTS ================= */
+const GENDERS=['Male','Female','Non-binary','Prefer not to say'];
+const AVATARS=['😎','🦁','🐺','🦊','🐸','🐼','🦄','👽','🤖','🐯','🦅','🔥'];
+const INTERESTS=['🍕 Food','🎮 Gaming','🏀 Sports','🎬 Movies','🥾 Outdoors','🎵 Music','🛍️ Shopping','🎨 Art','☕ Cafés','🌃 Nightlife','📚 Chill','🎳 Activities','💪 Fitness','✈️ Road trips'];
+const BUDGETS=['💸 Free','$ Cheap','$$ Moderate','$$$ Treat day'];
+const VIBES=['😌 Chill','⚡ Active','🎉 Party','🎲 Surprise me'];
+const RATINGS=['🔥 Legendary','😄 Great','🙂 Good','😐 Meh'];
+const SQUAD_EMOJIS=['🎉','🔥','🏀','🎮','🍕','🌮','🎬','🎵','⚽','🏈','🎳','🃏','🚗','🏖️','💪','👑','🤝','🦍','⭐','🌙','🍔','🎤','🛹','🧠'];
+const IDEA_BANK={
+ '🍕 Food':[['New taco spot crawl','Hit 2-3 taco places back to back and rank them like judges','$$'],['Build-your-own pizza night','Everyone brings one topping — chaos guaranteed','$'],['Hidden gem food hall run','Find the stall with the longest line and order that','$$']],
+ '🎮 Gaming':[['Retro game tournament','Bracket-style. Loser buys wings','$'],['Co-op night: one game, one couch','Rotate every death','💸'],['Arcade + pizza combo','Old school. Bring quarters energy','$$']],
+ '🏀 Sports':[['Pickup game at the park','First to 21, losers run a lap','💸'],['Watch party for the big game','Jerseys mandatory, trash talk encouraged','$'],['Topgolf / driving range session','Worst swing buys the round','$$$']],
+ '🎬 Movies':[['Movie marathon with a theme','One director, three films, unlimited popcorn','💸'],['Opening-night showing','Get tickets early, argue about it after','$$'],['Backyard projector night','Blankets, snacks, one horror movie minimum','$']],
+ '🥾 Outdoors':[['Sunset hike + food after','Golden hour photos or it didn\'t happen','💸'],['Bike ride to somewhere new','Pick a point on the map 5 miles out','💸'],['Bonfire night','S\'mores, stories, and someone brings a speaker','$']],
+ '🎵 Music':[['Local live show roulette','Pick a venue, see whoever\'s playing','$$'],['Karaoke room takeover','Private room, zero judgement','$$'],['Vinyl / record store dig','$10 limit — best find wins','$']],
+ '🌃 Nightlife':[['Rooftop spot hop','Start early, catch the skyline','$$$'],['Comedy club night','Sit near the front if you\'re brave','$$'],['Late-night diner run','2am pancakes hit different','$']],
+ '☕ Cafés':[['Café crawl + deep talks','Three cafés, three conversation topics','$$'],['Board game café session','Winner picks the next hangout','$']],
+ '🎳 Activities':[['Bowling with punishment rules','Gutter ball = do 10 pushups','$$'],['Escape room challenge','Beat the record or blame each other trying','$$$'],['Mini golf grudge match','Keep score. Hold grudges','$$'],['Go-kart grand prix','Podium photos required','$$$']],
+ '💪 Fitness':[['Group gym session + smoothies','PR attempts filmed for the archive','$'],['Climbing gym intro day','Chalk up, flame out, laugh a lot','$$']],
+ '📚 Chill':[['Game night at someone\'s place','Cards, snacks, group chat lore','💸'],['Cook-off challenge','One ingredient, four interpretations','$'],['Photo walk downtown','Best shot becomes the squad wallpaper','💸']],
+ '🛍️ Shopping':[['Thrift store challenge','$15 budget — assemble the wildest outfit','$'],['Mall food court world tour','Everyone orders from a different spot','$$']],
+ '🎨 Art':[['Paint & sip (or juice) night','Recreate one famous painting, badly','$$'],['Museum free-day visit','Split up, meet at the weirdest exhibit','💸']],
+ '✈️ Road trips':[['One-tank road trip','Pick a town 90 minutes away, explore it','$$'],['Sunrise drive + breakfast','Leave at 5:45. Regret nothing','$']]
+};
+
+/* ================= NAV ================= */
+let currentSquad=null;
+function nav(v){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  $('view-'+v).classList.add('active');
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  if(v==='home')renderHome(); if(v==='squads')renderSquads(); if(v==='memories')renderMemories();
+  if(v==='profile')renderProfile(); if(v==='discover')renderDiscover();
+}
+function showShell(on){$('topbar').style.display=on?'flex':'none';$('nav').style.display=on?'flex':'none'}
+
+/* ================= AUTH ================= */
+let mode='signup';
+function authMode(m){mode=m;$('segSignup').classList.toggle('on',m==='signup');$('segLogin').classList.toggle('on',m==='login')}
+function doAuth(){
+  const name=$('authName').value.trim(),email=$('authEmail').value.trim();
+  if(!name||!email.includes('@'))return toast('Enter your name and a valid email');
+  if(mode==='login'&&S.user&&S.user.email===email){toast('Welcome back, '+S.user.name+'!');enterApp();return}
+  S.user={id:uid(),name,email,age:null,gender:'',avatar:'😎',interests:[],budget:'$$ Moderate',vibe:'🎲 Surprise me',diet:'',city:'',createdAt:Date.now()};
+  save();track('sign_up',{email});subscribeToLoops(email,name);
+  startOnboarding();
+}
+function subscribeToLoops(email,name){console.log('[loops] subscribe',email,name) /* wire Loops API key for email re-engagement */}
+function logout(){if(!confirm('Log out? Your data stays saved on this device.'))return;showShell(false);document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$('view-auth').classList.add('active')}
+
+/* ================= ONBOARDING ================= */
+let obStep=0;
+function chipRow(elId,list,selected,multi,cb){
+  const el=$(elId);el.innerHTML='';
+  list.forEach(item=>{const c=document.createElement('span');c.className='chip'+((multi?selected.includes(item):selected===item)?' on':'');c.textContent=item;
+    c.onclick=()=>{cb(item,c)};el.appendChild(c)});
+}
+function startOnboarding(){
+  obStep=0;showOb();
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$('view-onboard').classList.add('active');
+  startOnboardingChips('pGender',GENDERS,S.user.gender);
+  startOnboardingChips('pAvatar',AVATARS,S.user.avatar);
+  multiChips('pInterests',INTERESTS,S.user.interests);
+  startOnboardingChips('pBudget',BUDGETS,S.user.budget);
+  startOnboardingChips('pVibe',VIBES,S.user.vibe);
+}
+function startOnboardingChips(elId,list,sel){
+  const field={pGender:'gender',pAvatar:'avatar',pBudget:'budget',pVibe:'vibe',epGender:'gender',epBudget:'budget',epVibe:'vibe'}[elId];
+  chipRow(elId,list,sel,false,(item)=>{S.user[field]=item;startOnboardingChips(elId,list,item)});
+}
+function multiChips(elId,list,arr){
+  chipRow(elId,list,arr,true,(item,c)=>{const i=arr.indexOf(item);if(i>=0){arr.splice(i,1);c.classList.remove('on')}else{arr.push(item);c.classList.add('on')}});
+}
+function showOb(){
+  for(let i=0;i<4;i++)$('obStep'+i).style.display=i===obStep?'':'none';
+  document.querySelectorAll('#obDots span').forEach((d,i)=>d.classList.toggle('on',i<=obStep));
+  $('obBack').style.display=obStep>0?'':'none';
+  $('obNext').textContent=obStep===3?'Let\'s go 🎯':'Next →';
+  if(obStep===3)$('obName').textContent=S.user.name;
+}
+function obNav(dir){
+  if(dir>0){
+    if(obStep===0){S.user.age=parseInt($('pAge').value)||null;if(!S.user.age)return toast('Enter your age');if(!S.user.gender)return toast('Pick a gender option')}
+    if(obStep===1&&S.user.interests.length<3)return toast('Pick at least 3 interests');
+    if(obStep===2){S.user.diet=$('pDiet').value.trim();S.user.city=$('pCity').value.trim()}
+    if(obStep===3){save();track('onboarding_complete');enterApp();return}
+  }
+  obStep=Math.max(0,Math.min(3,obStep+dir));showOb();
+}
+function enterApp(){save();showShell(true);nav('home')}
+
+/* ================= HOME ================= */
+function renderHome(){
+  $('homeGreet').textContent='Hey '+S.user.name.split(' ')[0]+' 👋';
+  $('homeSub').textContent=S.squads.length?'Who are we hanging with today?':'Create your first squad to start.';
+  $('homeAvatar').textContent=S.user.avatar;
+  $('stSquads').textContent=S.squads.length;$('stPicks').textContent=S.stats.picks;$('stMems').textContent=S.memories.length;
+  $('proBadge').className='badge'+(S.pro?' pro':'');$('proBadge').textContent=S.pro?'PRO 👑':'FREE';
+  const noKeys=!S.settings.claudeKey&&!S.settings.mapsKey;
+  $('homeKeys').innerHTML=noKeys?`<div class="card" style="border-color:color-mix(in srgb,var(--warn) 50%,transparent)"><div class="row"><span style="font-size:20px">🔑</span><div style="flex:1"><h3>Unlock live mode</h3><p class="sub" style="font-size:12px">Add your Claude + Google Maps keys in Settings for real AI picks and live places.</p></div><button class="btn small" onclick="openSettings()">Add</button></div></div>`:'';
+  const wrap=$('homeSquads');wrap.innerHTML='';
+  if(!S.squads.length){wrap.innerHTML=`<div class="empty"><span class="big">👥</span>No squads yet.<br>Round up the crew!</div>`}
+  S.squads.slice(0,3).forEach(sq=>wrap.appendChild(squadCard(sq)));
+  $('homeUpsell').innerHTML=S.pro?'':`<div class="card tap" onclick="openModal('mPaywall')" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,transparent),color-mix(in srgb,var(--accent2) 14%,transparent))"><div class="spread"><div class="row"><span style="font-size:24px">👑</span><div><h3>Go Pro</h3><p class="sub" style="font-size:12px">Unlimited squads & AI picks · 7-day free trial</p></div></div><span>→</span></div></div>`;
+}
+function squadCard(sq){
+  const d=document.createElement('div');d.className='card tap';
+  const last=sq.chat.length?sq.chat[sq.chat.length-1]:null;
+  const preview=last?(last.type==='msg'?esc((last.sender===S.user.name?'You':last.sender)+': '+last.text):last.type==='poll'?'📊 Poll: '+esc(last.q):last.type==='sys'?esc(last.text):'🎯 AI picks dropped'):'Say hi to kick things off';
+  d.innerHTML=`<div class="spread"><div class="row"><div class="avatar">${sq.emoji}</div><div><h3>${esc(sq.name)}</h3><p class="sub" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${preview}</p></div></div><div style="text-align:right"><span class="badge">${sq.members.length+1} 👤</span></div></div>`;
+  d.onclick=()=>openSquad(sq.id);return d;
+}
+
+/* ================= SQUADS ================= */
+const FREE_SQUADS=3;
+function renderSquads(){
+  $('squadCount').textContent=S.pro?`${S.squads.length} squads · unlimited (Pro)`:`${S.squads.length}/${FREE_SQUADS} squads on the free plan`;
+  const el=$('squadList');el.innerHTML='';
+  if(!S.squads.length){el.innerHTML=`<div class="empty"><span class="big">🫂</span>Different crews, different chats.<br>Gym squad, day ones, work friends — keep them all here.</div>`}
+  S.squads.forEach(sq=>el.appendChild(squadCard(sq)));
+}
+function openNewSquad(){
+  if(!S.pro&&S.squads.length>=FREE_SQUADS){track('paywall_triggered',{reason:'squad_limit'});openModal('mPaywall');return}
+  nsMembers=[]; $('nsName').value='';$('nsMemberList').innerHTML='';nsEmoji=SQUAD_EMOJIS[0];
+  const g=$('nsEmojis');g.innerHTML='';SQUAD_EMOJIS.forEach(e=>{const b=document.createElement('button');b.textContent=e;b.onclick=()=>{nsEmoji=e;[...g.children].forEach(c=>c.style.background='');b.style.background='var(--card2)'};g.appendChild(b)});
+  g.children[0].style.background='var(--card2)';
+  openModal('mNewSquad');
+}
+let nsMembers=[],nsEmoji='🎉';
+function addNsMember(){const v=$('nsMember').value.trim();if(!v)return;nsMembers.push(v);$('nsMember').value='';addNsMemberRender()}
+function addNsMemberRender(){const el=$('nsMemberList');el.innerHTML='';nsMembers.forEach((m,i)=>{const c=document.createElement('span');c.className='chip on';c.textContent=m+' ✕';c.onclick=()=>{nsMembers.splice(i,1);addNsMemberRender()};el.appendChild(c)})}
+function createSquad(){
+  const name=$('nsName').value.trim();if(!name)return toast('Give your squad a name');
+  const sq={id:uid(),name,emoji:nsEmoji,members:nsMembers.map(n=>({id:uid(),name:n,emoji:AVATARS[Math.floor(Math.random()*AVATARS.length)]})),chat:[],createdAt:Date.now()};
+  sq.chat.push({id:uid(),type:'sys',text:`Squad created — welcome to ${name}! ${nsEmoji}`,ts:Date.now()});
+  S.squads.push(sq);save();track('squad_created',{name,members:nsMembers.length});
+  closeModal('mNewSquad');openSquad(sq.id);toast('Squad created 🎉');
+}
+function openSquad(id){currentSquad=id;const sq=getSquad();if(!sq)return;
+  $('sqEmoji').textContent=sq.emoji;$('sqName').textContent=sq.name;
+  $('sqMembers').textContent='You, '+(sq.members.map(m=>m.name).join(', ')||'just you for now');
+  sqTab('chat');nav('squad');renderChat();
+}
+const getSquad=()=>S.squads.find(s=>s.id===currentSquad);
+function sqTab(t){
+  $('tabChat').classList.toggle('on',t==='chat');$('tabPlan').classList.toggle('on',t==='plan');$('tabMems').classList.toggle('on',t==='mems');
+  $('sqChatPane').style.display=t==='chat'?'':'none';$('sqPlanPane').style.display=t==='plan'?'':'none';$('sqMemsPane').style.display=t==='mems'?'':'none';
+  if(t==='mems')renderSquadMems(); if(t==='chat')renderChat();
+}
+function openSquadOpts(){
+  const sq=getSquad();
+  const choice=prompt(`Squad options for "${sq.name}":\n1 = Add member\n2 = Rename squad\n3 = Delete squad\n\nType a number:`);
+  if(choice==='1'){const n=prompt('New member name:');if(n){sq.members.push({id:uid(),name:n.trim(),emoji:AVATARS[Math.floor(Math.random()*AVATARS.length)]});save();openSquad(sq.id);toast(n+' added 👋')}}
+  else if(choice==='2'){const n=prompt('New squad name:',sq.name);if(n){sq.name=n.trim();save();openSquad(sq.id)}}
+  else if(choice==='3'){if(confirm('Delete "'+sq.name+'" and its chat? Memories stay in the vault.')){S.squads=S.squads.filter(s=>s.id!==sq.id);save();nav('squads');toast('Squad deleted')}}
+}
+
+/* ================= CHAT ================= */
+function renderChat(){
+  const sq=getSquad();if(!sq)return;const el=$('chatScroll');el.innerHTML='';
+  sq.chat.forEach(m=>{
+    if(m.type==='sys'){const d=document.createElement('p');d.className='sub';d.style.cssText='text-align:center;font-size:11.5px;margin:4px 0';d.textContent=m.text;el.appendChild(d)}
+    else if(m.type==='msg'){const d=document.createElement('div');const mine=m.sender===S.user.name&&!m.ai;d.className='msg '+(m.ai?'ai':mine?'me':'them');
+      d.innerHTML=(mine?'':`<div class="who">${m.ai?'🤖 Squad AI':esc(m.sender)}</div>`)+esc(m.text).replace(/\n/g,'<br>');el.appendChild(d)}
+    else if(m.type==='poll'){el.appendChild(pollEl(sq,m))}
+    else if(m.type==='pick'){el.appendChild(pickChatEl(m))}
+  });
+  const pane=$('view-squad');requestAnimationFrame(()=>{pane.scrollTop=pane.scrollHeight});
+}
+function sendMsg(){
+  const sq=getSquad();const inp=$('chatText');const t=inp.value.trim();if(!t)return;
+  sq.chat.push({id:uid(),type:'msg',sender:S.user.name,text:t,ts:Date.now()});inp.value='';save();renderChat();
+  if(t.toLowerCase().startsWith('@ai')){aiChatReply(sq,t.replace(/^@ai/i,'').trim())}
+}
+async function aiChatReply(sq,q){
+  const think={id:uid(),type:'msg',sender:'AI',ai:true,text:'…thinking…',ts:Date.now()};
+  sq.chat.push(think);renderChat();
+  const sys=`You are Squad AI inside the Squad Pick app — the fun, decisive friend who ends group-chat debates. The squad is "${sq.name}" (members: ${['You',...sq.members.map(m=>m.name)].join(', ')}). User profile: ${profileBlurb()}. Their past favorite hangouts: ${topTastes()||'none yet'}. Keep replies under 80 words, casual, concrete, decisive.`;
+  const out=await askClaude(q||'Give us one great hangout idea for today.',sys);
+  think.text=out||localAIReply();save();renderChat();
+}
+function localAIReply(){
+  const ideas=ideasForUser(1);const i=ideas[0];
+  return `No Claude key yet (add it in ⚙️ Settings for the real me) — but here's a pick: ${i.title}. ${i.desc}. ${i.cost} vibes. Lock it in? 🎯`;
+}
+function profileBlurb(){const u=S.user;return `${u.name}, ${u.age||'?'}yo ${u.gender||''}, into ${u.interests.join(', ')||'anything'}, budget ${u.budget}, energy ${u.vibe}${u.diet?', food notes: '+u.diet:''}${u.city?', based in '+u.city:''}`}
+function topTastes(){const e=Object.entries(S.tastes.loved).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);return e.join(', ')}
+
+/* ================= POLLS ================= */
+function openPollModal(){$('pollQ').value='';$('pollOpts').innerHTML='';addPollOpt();addPollOpt();openModal('mPoll')}
+function addPollOpt(){const d=document.createElement('input');d.placeholder='Option '+($('pollOpts').children.length+1);d.style.marginTop='8px';$('pollOpts').appendChild(d)}
+function createPoll(){
+  const q=$('pollQ').value.trim();if(!q)return toast('Add a question');
+  const opts=[...$('pollOpts').children].map(i=>i.value.trim()).filter(Boolean);
+  if(opts.length<2)return toast('Need at least 2 options');
+  const sq=getSquad();
+  sq.chat.push({id:uid(),type:'poll',q,by:S.user.name,ts:Date.now(),options:opts.map(t=>({t,votes:[]}))});
+  save();closeModal('mPoll');renderChat();track('poll_created');
+}
+function pollEl(sq,p){
+  const d=document.createElement('div');d.className='pollCard';
+  const total=p.options.reduce((a,o)=>a+o.votes.length,0);
+  const max=Math.max(...p.options.map(o=>o.votes.length));
+  d.innerHTML=`<div class="spread"><h3>📊 ${esc(p.q)}</h3><span class="badge">${total} vote${total===1?'':'s'}</span></div><p class="sub" style="font-size:11.5px;margin-top:2px">by ${esc(p.by)} · tap an option to cycle who's voting</p>`;
+  const people=[{id:'me',name:S.user.name,emoji:S.user.avatar},...sq.members];
+  p.options.forEach(o=>{
+    const row=document.createElement('div');row.className='pollOpt'+(o.votes.length&&o.votes.length===max?' win':'');
+    row.innerHTML=`<span style="flex:1">${esc(o.t)}</span><span class="voteDots">${o.votes.map(v=>{const per=people.find(pp=>pp.id===v);return `<span title="${esc(per?per.name:'')}">${per?per.emoji:'🙂'}</span>`}).join('')}</span><span class="badge">${o.votes.length}</span>`;
+    row.onclick=()=>{
+      const next=people.find(pp=>!o.votes.includes(pp.id));
+      if(next){o.votes.push(next.id)}else{o.votes=[]}
+      save();renderChat();
+    };
+    d.appendChild(row);
+  });
+  return d;
+}
+
+/* ================= AI PICKS ================= */
+const FREE_PICKS_PER_DAY=5;
+function picksToday(){const today=new Date().toDateString();return(S.stats.pickLog||[]).filter(t=>new Date(t).toDateString()===today).length}
+function ideasForUser(n){
+  const pool=[];
+  const ints=S.user.interests.length?S.user.interests:Object.keys(IDEA_BANK);
+  ints.forEach(i=>{(IDEA_BANK[i]||[]).forEach(x=>pool.push({cat:i,title:x[0],desc:x[1],cost:x[2]}))});
+  Object.keys(IDEA_BANK).forEach(i=>{if(!ints.includes(i)&&Math.random()<.25)(IDEA_BANK[i]||[]).forEach(x=>pool.push({cat:i,title:x[0],desc:x[1],cost:x[2]}))});
+  pool.sort((a,b)=>((S.tastes.loved[b.cat]||0)-(S.tastes.passed[b.cat]||0))-((S.tastes.loved[a.cat]||0)-(S.tastes.passed[a.cat]||0))+Math.random()-.5);
+  const seen=new Set(),out=[];
+  for(const p of pool){if(!seen.has(p.title)){seen.add(p.title);out.push(p)}if(out.length>=n)break}
+  return out;
+}
+async function genPicks(){
+  if(!S.pro&&picksToday()>=FREE_PICKS_PER_DAY){track('paywall_triggered',{reason:'pick_limit'});openModal('mPaywall');return}
+  const sq=getSquad();if(!sq)return;
+  const box=$('pickResults');box.innerHTML=`<div class="empty"><span class="big">🎲</span>Cooking up picks…</div>`;
+  S.stats.picks++;S.stats.pickLog=(S.stats.pickLog||[]).slice(-60);S.stats.pickLog.push(Date.now());
+  track('pick_generated',{squad:sq.name});
+  let picks=null;
+  if(S.settings.claudeKey){
+    const sys=`You generate hangout ideas for friend squads. Respond with ONLY valid JSON: an array of exactly 3 objects with keys "title","desc" (max 18 words, fun, specific),"cat" (one of: ${Object.keys(IDEA_BANK).join(', ')}),"cost" (one of 💸,$,$$,$$$). No markdown.`;
+    const prompt=`Squad "${sq.name}" (${sq.members.length+1} people). Planner profile: ${profileBlurb()}. Past favorites: ${topTastes()||'unknown'}. Recent hangouts to avoid repeating: ${S.memories.slice(0,4).map(m=>m.title).join('; ')||'none'}. Generate 3 hangout picks for the next few days.`;
+    const out=await askClaude(prompt,sys);
+    if(out){try{picks=JSON.parse(out.replace(/```json|```/g,'').trim())}catch(e){console.warn('parse fail',out)}}
+  }
+  if(!Array.isArray(picks)||picks.length===0)picks=ideasForUser(3);
+  save();
+  box.innerHTML=`<p class="sub" style="margin:14px 0 8px">${S.settings.claudeKey?'✨ Fresh from Claude — tuned to your squad:':'🎲 Smart picks (add a Claude key for live AI):'}</p>`;
+  picks.slice(0,3).forEach(p=>box.appendChild(pickEl(sq,p)));
+}
+function pickEl(sq,p){
+  const d=document.createElement('div');d.className='pickCard';d.style.marginBottom='10px';
+  d.innerHTML=`<div class="spread"><h3>${esc(p.title)}</h3><span class="badge">${esc(p.cost||'$$')}</span></div><p class="sub" style="margin:5px 0 10px">${esc(p.desc||'')}</p>`;
+  const row=document.createElement('div');row.className='row';
+  const love=document.createElement('button');love.className='btn small';love.textContent='🔥 Love it';
+  love.onclick=()=>{S.tastes.loved[p.cat||'misc']=(S.tastes.loved[p.cat||'misc']||0)+1;
+    sq.chat.push({id:uid(),type:'pick',title:p.title,desc:p.desc,cost:p.cost,ts:Date.now()});
+    save();toast('Sent to squad chat 🎯');maybeAskRating();sqTab('chat')};
+  const pass=document.createElement('button');pass.className='btn ghost small';pass.textContent='👎 Pass';
+  pass.onclick=()=>{S.tastes.passed[p.cat||'misc']=(S.tastes.passed[p.cat||'misc']||0)+1;save();d.style.opacity=.35;pass.disabled=love.disabled=true;toast('Noted — I\'ll learn from that')};
+  const share=document.createElement('button');share.className='btn ghost small';share.textContent='📤';
+  share.onclick=()=>sharePick(p);
+  row.append(love,pass,share);d.appendChild(row);return d;
+}
+function pickChatEl(m){
+  const d=document.createElement('div');d.className='pickCard';
+  d.innerHTML=`<div class="spread"><h3>🎯 ${esc(m.title)}</h3><span class="badge">${esc(m.cost||'$$')}</span></div><p class="sub" style="margin:4px 0 8px">${esc(m.desc||'')}</p><p class="sub" style="font-size:11px">AI pick · vote with a 📊 poll or just lock it in</p>`;
+  return d;
+}
+async function quickPick(){
+  if(!S.squads.length){toast('Create a squad first!');openNewSquad();return}
+  currentSquad=S.squads[0].id;openSquad(currentSquad);sqTab('plan');genPicks();
+}
+function sharePick(p){
+  const text=`🎯 Squad Pick says: ${p.title} — ${p.desc||''}\n\nDecide faster with Squad Pick!`;
+  S.stats.shares++;save();track('share_pick');
+  if(navigator.share){navigator.share({title:'Squad Pick',text}).catch(()=>{})}
+  else{navigator.clipboard.writeText(text).then(()=>toast('Copied — paste it in the group chat 📋'))}
+}
+
+/* ================= CLAUDE API ================= */
+async function askClaude(prompt,system){
+  if(!S.settings.claudeKey)return null;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'x-api-key':S.settings.claudeKey,'anthropic-version':'2023-06-01','content-type':'application/json','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:S.settings.model||'claude-sonnet-5',max_tokens:700,system:system||'',messages:[{role:'user',content:prompt}]})});
+    if(!r.ok){const e=await r.text();console.warn('Claude error',e);toast('Claude API error '+r.status+' — check your key/model in Settings');return null}
+    const j=await r.json();return (j.content||[]).map(c=>c.text||'').join('').trim();
+  }catch(e){console.warn(e);toast('Couldn\'t reach Claude — check connection/key');return null}
+}
+</script>
+<script>
+/* ================= DISCOVER (Google Maps) ================= */
+const DISC_CATS=[['🍕','Restaurants','restaurant'],['☕','Cafés','cafe'],['🎳','Fun','bowling_alley'],['🌳','Parks','park'],['🎬','Movies','movie_theater'],['🍦','Dessert','bakery'],['🏋️','Gyms','gym'],['🛍️','Malls','shopping_mall']];
+let map=null,placesSvc=null,markers=[],discCat='restaurant',userLoc=null;
+function renderDiscover(){
+  const cats=$('discoverCats');cats.innerHTML='';
+  DISC_CATS.forEach(([e,l,t])=>{const c=document.createElement('span');c.className='chip'+(discCat===t?' on':'');c.textContent=e+' '+l;
+    c.onclick=()=>{discCat=t;renderDiscover();searchPlaces()};cats.appendChild(c)});
+  if(!S.settings.mapsKey){
+    $('mapWrap').innerHTML=`<div class="card" style="text-align:center;padding:22px"><div style="font-size:38px">🗺️</div><h3 style="margin:6px 0 4px">Live map is one key away</h3><p class="sub">Paste your Google Maps API key in Settings and Discover shows real spots near you — ratings, distance, the works.</p><div style="margin-top:12px"><button class="btn small" onclick="openSettings()">Add key</button></div></div>`;
+    renderPlacesFallback();return;
+  }
+  $('mapWrap').innerHTML='<div id="map"></div>';
+  if(window.google&&google.maps){initMap()}else{loadMapsScript()}
+}
+function loadMapsScript(){
+  if(document.getElementById('gmapsScript'))return;
+  const s=document.createElement('script');s.id='gmapsScript';
+  s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(S.settings.mapsKey)}&libraries=places&callback=initMap`;
+  s.onerror=()=>{toast('Google Maps failed to load — check your key');};
+  window.initMap=initMap;document.head.appendChild(s);
+}
+function initMap(){
+  const el=document.getElementById('map');if(!el)return;
+  const fallback={lat:39.9526,lng:-75.1652};
+  const make=(loc)=>{userLoc=loc;
+    map=new google.maps.Map(el,{center:loc,zoom:13,disableDefaultUI:true,zoomControl:true,styles:document.documentElement.dataset.theme==='light'?[]:DARK_MAP});
+    placesSvc=new google.maps.places.PlacesService(map);searchPlaces();};
+  if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>make({lat:p.coords.latitude,lng:p.coords.longitude}),()=>make(fallback),{timeout:6000})}else make(fallback);
+}
+function searchPlaces(){
+  if(!placesSvc||!userLoc){renderPlacesFallback();return}
+  placesSvc.nearbySearch({location:userLoc,radius:6000,type:discCat},(res,status)=>{
+    markers.forEach(m=>m.setMap(null));markers=[];
+    const list=$('placeList');list.innerHTML='';
+    if(status!==google.maps.places.PlacesServiceStatus.OK||!res||!res.length){list.innerHTML=`<div class="empty"><span class="big">🤷</span>Nothing found nearby for that category.</div>`;return}
+    res.slice(0,10).forEach(p=>{
+      if(p.geometry&&p.geometry.location){markers.push(new google.maps.Marker({map,position:p.geometry.location,title:p.name}))}
+      const d=document.createElement('div');d.className='card';
+      d.innerHTML=`<div class="spread"><div class="row"><div class="placeImg">${DISC_CATS.find(c=>c[2]===discCat)[0]}</div><div><h3>${esc(p.name)}</h3><p class="sub" style="font-size:12px">${p.rating?'⭐ '+p.rating+' ('+(p.user_ratings_total||0)+')':''} ${p.vicinity?'· '+esc(p.vicinity):''}</p></div></div></div>
+      <div class="row" style="margin-top:10px"><button class="btn small" style="flex:1">📊 Poll the squad</button><button class="btn ghost small" onclick="window.open('https://www.google.com/maps/place/?q=place_id:${p.place_id}','_blank')">🗺️ Open</button></div>`;
+      d.querySelector('.btn.small').onclick=()=>pollPlace(p.name);
+      list.appendChild(d);
+    });
+  });
+}
+function pollPlace(name){
+  if(!S.squads.length){toast('Create a squad first');return}
+  const sq=S.squads[0];
+  sq.chat.push({id:uid(),type:'poll',q:'Should we hit '+name+'?',by:S.user.name,ts:Date.now(),options:[{t:'🔥 Yes, lock it in',votes:[]},{t:'🤔 Maybe',votes:[]},{t:'👎 Pass',votes:[]}]});
+  save();openSquad(sq.id);toast('Poll sent to '+sq.name);
+}
+function renderPlacesFallback(){
+  const list=$('placeList');
+  const catLabel=DISC_CATS.find(c=>c[2]===discCat);
+  list.innerHTML=`<p class="sub" style="margin-bottom:10px">Preview mode — sample ${catLabel[1].toLowerCase()} (live results appear once your Maps key is in):</p>`;
+  const samples={restaurant:['Tony\'s Corner Slice','La Fonda Taqueria','Golden Bowl Ramen'],cafe:['Daily Grind Coffee','Maple & Fern Café','Sunrise Espresso Bar'],bowling_alley:['Strike Zone Lanes','Retro Arcade & Games','Puzzle Break Escape Rooms'],park:['Riverside Park','Lakeview Trailhead','Summit Overlook'],movie_theater:['Grand 12 Cinemas','The Indie Screen','Starlight Drive-In'],bakery:['Frosted Dreams','Scoops Ice Cream Co.','Butter & Crumb'],gym:['Iron Temple Gym','Ascent Climbing Co.','FlowState Yoga'],shopping_mall:['Central City Mall','The Promenade','Old Town Market']};
+  (samples[discCat]||[]).forEach((n,i)=>{
+    const d=document.createElement('div');d.className='card';
+    d.innerHTML=`<div class="spread"><div class="row"><div class="placeImg">${catLabel[0]}</div><div><h3>${n}</h3><p class="sub" style="font-size:12px">⭐ ${(4.2+i*0.2).toFixed(1)} · sample</p></div></div></div>`;
+    list.appendChild(d);
+  });
+}
+const DARK_MAP=[{elementType:'geometry',stylers:[{color:'#1a2035'}]},{elementType:'labels.text.fill',stylers:[{color:'#8b93a7'}]},{elementType:'labels.text.stroke',stylers:[{color:'#0b0f1a'}]},{featureType:'road',elementType:'geometry',stylers:[{color:'#2a3350'}]},{featureType:'water',elementType:'geometry',stylers:[{color:'#0e1424'}]},{featureType:'poi',stylers:[{visibility:'off'}]}];
+
+/* ================= MEMORIES ================= */
+function openMemModal(squadId){
+  const sel=$('memSquad');sel.innerHTML='<option value="">(no squad)</option>'+S.squads.map(s=>`<option value="${s.id}" ${s.id===squadId?'selected':''}>${s.emoji} ${esc(s.name)}</option>`).join('');
+  $('memTitle').value='';$('memNotes').value='';$('memPhoto').value='';
+  $('memDate').value=new Date().toISOString().slice(0,10);
+  memRating=RATINGS[1];renderMemRating();
+  openModal('mMem');
+}
+let memRating=RATINGS[1];
+function renderMemRating(){chipRow('memRating',RATINGS,memRating,false,(r)=>{memRating=r;renderMemRating()})}
+async function saveMemory(){
+  const title=$('memTitle').value.trim();if(!title)return toast('Give it a title');
+  let photo=null;const f=$('memPhoto').files[0];
+  if(f){photo=await new Promise(res=>{const r=new FileReader();r.onload=e=>{
+    const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const sc=Math.min(1,700/img.width);c.width=img.width*sc;c.height=img.height*sc;c.getContext('2d').drawImage(img,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.75))};img.src=e.target.result};r.readAsDataURL(f)})}
+  const m={id:uid(),title,squadId:$('memSquad').value||null,date:$('memDate').value||new Date().toISOString().slice(0,10),rating:memRating,notes:$('memNotes').value.trim(),photo,ts:Date.now()};
+  S.memories.unshift(m);
+  // feed the taste memory
+  S.user.interests.forEach(i=>{if(title.toLowerCase().includes(i.split(' ')[1]?.toLowerCase()||'zzz'))S.tastes.loved[i]=(S.tastes.loved[i]||0)+1});
+  if(memRating===RATINGS[0])S.tastes.loved['recent:'+title]=(S.tastes.loved['recent:'+title]||0)+2;
+  save();closeModal('mMem');toast('Saved to the vault 📁');track('memory_logged');maybeAskRating();
+  renderMemories();if($('view-squad').classList.contains('active'))renderSquadMems();
+}
+function memCard(m,compact){
+  const sq=S.squads.find(s=>s.id===m.squadId);
+  const d=document.createElement('div');d.className='card';
+  d.innerHTML=`<div class="spread"><div><h3>${esc(m.title)}</h3><p class="sub" style="font-size:12px">${fmtDate(m.date)} ${sq?'· '+sq.emoji+' '+esc(sq.name):''}</p></div><span class="badge">${esc(m.rating.split(' ')[0])}</span></div>
+  ${m.notes?`<p class="sub" style="margin-top:8px;color:var(--text)">${esc(m.notes)}</p>`:''}
+  ${m.photo?`<img class="memPhoto" src="${m.photo}" alt="">`:''}
+  <div class="row" style="margin-top:10px"><button class="btn ghost small" style="flex:1">🔁 Do it again</button><button class="btn ghost small" onclick="deleteMemory('${m.id}')">🗑</button></div>`;
+  d.querySelector('.btn.ghost.small').onclick=()=>{if(!S.squads.length)return toast('Create a squad first');const sq2=S.squads.find(s=>s.id===m.squadId)||S.squads[0];sq2.chat.push({id:uid(),type:'msg',sender:S.user.name,text:'Rerun idea: '+m.title+' — who\'s in? 🔁',ts:Date.now()});save();openSquad(sq2.id);};
+  return d;
+}
+function deleteMemory(id){if(!confirm('Delete this memory?'))return;S.memories=S.memories.filter(m=>m.id!==id);save();renderMemories();if($('view-squad').classList.contains('active'))renderSquadMems()}
+function renderMemories(){
+  const q=($('memSearch').value||'').toLowerCase();
+  const el=$('memList');el.innerHTML='';
+  const items=S.memories.filter(m=>!q||m.title.toLowerCase().includes(q)||(m.notes||'').toLowerCase().includes(q));
+  if(!items.length){el.innerHTML=`<div class="empty"><span class="big">📁</span>${q?'No matches.':'No hangouts logged yet.<br>Every legendary night deserves a record.'}</div>`;return}
+  let lastMonth='';
+  items.forEach(m=>{
+    const month=new Date(m.date).toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    if(month!==lastMonth){lastMonth=month;const h=document.createElement('h3');h.textContent='📂 '+month;h.style.cssText='margin:14px 0 8px;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.6px';el.appendChild(h)}
+    el.appendChild(memCard(m));
+  });
+}
+function renderSquadMems(){
+  const el=$('sqMemList');el.innerHTML='';
+  const items=S.memories.filter(m=>m.squadId===currentSquad);
+  if(!items.length){el.innerHTML=`<div class="empty"><span class="big">📸</span>No memories with this squad yet.<br>Change that this weekend.</div>`;return}
+  items.forEach(m=>el.appendChild(memCard(m)));
+}
+
+/* ================= WRAPPED ================= */
+function openWrapped(){
+  if(!S.pro){track('paywall_triggered',{reason:'wrapped'});openModal('mPaywall');return}
+  const month=new Date().toLocaleDateString(undefined,{month:'long'});
+  const monthMems=S.memories.filter(m=>new Date(m.date).getMonth()===new Date().getMonth());
+  const topSquad=S.squads.map(sq=>[sq,S.memories.filter(m=>m.squadId===sq.id).length]).sort((a,b)=>b[1]-a[1])[0];
+  const fire=monthMems.filter(m=>m.rating===RATINGS[0]).length;
+  $('wrapInner').innerHTML=`
+  <div class="wrapCard">
+    <p style="font-weight:800;letter-spacing:2px;font-size:12px;opacity:.85">SQUAD WRAPPED · ${month.toUpperCase()}</p>
+    <div style="font-size:56px;margin:12px 0">${S.user.avatar}</div>
+    <h1 style="font-size:26px">${esc(S.user.name)}'s crew ran it up</h1>
+    <div class="statGrid" style="margin:18px 0">
+      <div class="stat" style="background:rgba(255,255,255,.16);border:none"><div class="n" style="color:#fff;-webkit-text-fill-color:#fff">${monthMems.length}</div><div class="l" style="color:rgba(255,255,255,.8)">HANGOUTS</div></div>
+      <div class="stat" style="background:rgba(255,255,255,.16);border:none"><div class="n" style="color:#fff;-webkit-text-fill-color:#fff">${S.stats.picks}</div><div class="l" style="color:rgba(255,255,255,.8)">AI PICKS</div></div>
+      <div class="stat" style="background:rgba(255,255,255,.16);border:none"><div class="n" style="color:#fff;-webkit-text-fill-color:#fff">${fire}</div><div class="l" style="color:rgba(255,255,255,.8)">🔥 NIGHTS</div></div>
+    </div>
+    <p style="font-weight:700">${topSquad&&topSquad[1]?'MVP squad: '+topSquad[0].emoji+' '+esc(topSquad[0].name):'This month\'s MVP squad: still up for grabs 👀'}</p>
+  </div>
+  <button class="btn" style="margin-top:14px" onclick="shareWrapped()">📤 Share your Wrapped</button>`;
+  openModal('mWrapped');
+}
+function shareWrapped(){S.stats.shares++;save();track('share_wrapped');
+  const t=`My squad's ${new Date().toLocaleDateString(undefined,{month:'long'})} Wrapped 🎯 ${S.memories.length} hangouts logged, ${S.stats.picks} AI picks. Get Squad Pick!`;
+  if(navigator.share){navigator.share({text:t}).catch(()=>{})}else{navigator.clipboard.writeText(t).then(()=>toast('Copied! Post it 📋'))}}
+
+/* ================= PROFILE / PERSONALIZATION ================= */
+function renderProfile(){
+  $('profAvatar').textContent=S.user.avatar;$('profName').textContent=S.user.name;
+  $('profMeta').textContent=[S.user.age?S.user.age+' yrs':null,S.user.gender||null,S.user.city||null].filter(Boolean).join(' · ')||S.user.email;
+  $('profBadge').className='badge'+(S.pro?' pro':'');$('profBadge').textContent=S.pro?'PRO 👑':'FREE';
+  $('pfPicks').textContent=S.stats.picks;$('pfMems').textContent=S.memories.length;$('pfStreak').textContent=S.stats.streak;
+  $('profUpsell').innerHTML=S.pro?'':`<div class="card tap" onclick="openModal('mPaywall')" style="background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,transparent),color-mix(in srgb,var(--accent2) 14%,transparent))"><div class="spread"><div class="row"><span style="font-size:22px">👑</span><div><h3>Upgrade to Pro</h3><p class="sub" style="font-size:12px">Unlimited everything · 7-day free trial</p></div></div><span>→</span></div></div>`;
+}
+function openPersonalization(){
+  $('epAge').value=S.user.age||'';$('epDiet').value=S.user.diet||'';$('epCity').value=S.user.city||'';
+  startOnboardingChips('epGender',GENDERS,S.user.gender);
+  multiChips('epInterests',INTERESTS,S.user.interests);
+  startOnboardingChips('epBudget',BUDGETS,S.user.budget);
+  startOnboardingChips('epVibe',VIBES,S.user.vibe);
+  openModal('mPerso');
+}
+function savePersonalization(){
+  S.user.age=parseInt($('epAge').value)||S.user.age;S.user.diet=$('epDiet').value.trim();S.user.city=$('epCity').value.trim();
+  save();closeModal('mPerso');toast('AI updated with your new profile 🧬');renderProfile();
+}
+
+/* ================= SETTINGS ================= */
+function openSettings(){
+  $('setClaude').value=S.settings.claudeKey;$('setMaps').value=S.settings.mapsKey;$('setModel').value=S.settings.model;
+  $('setPayM').value=S.settings.payM||'';$('setPayY').value=S.settings.payY||'';$('setPaypal').value=S.settings.paypal||'';$('setCashtag').value=S.settings.cashtag||'';
+  $('thDark').classList.toggle('on',S.settings.theme!=='light');$('thLight').classList.toggle('on',S.settings.theme==='light');
+  $('dotClaude').style.background=S.settings.claudeKey?'var(--good)':'var(--bad)';
+  $('dotMaps').style.background=S.settings.mapsKey?'var(--good)':'var(--bad)';
+  $('dotPay').style.background=(S.settings.payM||S.settings.payY||S.settings.paypal||S.settings.cashtag)?'var(--good)':'var(--bad)';
+  openModal('mSettings');
+}
+function setTheme(t){S.settings.theme=t;document.documentElement.dataset.theme=t==='light'?'light':'';save();
+  $('thDark').classList.toggle('on',t!=='light');$('thLight').classList.toggle('on',t==='light')}
+function setAccent(a){S.settings.accent=a;document.documentElement.dataset.accent=a;save()}
+function saveSettings(){
+  S.settings.claudeKey=$('setClaude').value.trim();S.settings.mapsKey=$('setMaps').value.trim();
+  S.settings.model=$('setModel').value.trim()||'claude-sonnet-5';
+  S.settings.payM=$('setPayM').value.trim();S.settings.payY=$('setPayY').value.trim();
+  S.settings.paypal=$('setPaypal').value.trim();S.settings.cashtag=$('setCashtag').value.trim();
+  save();closeModal('mSettings');toast('Settings saved ✅');
+  if($('view-discover').classList.contains('active'))renderDiscover();
+  renderHome();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='squadpick-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  toast('Backup downloaded ⬇');
+}
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);if(!d.user)throw 0;localStorage.setItem(DBKEY,JSON.stringify(d));S=load();applyTheme();toast('Data restored ✅');closeModal('mSettings');enterApp()}catch(err){toast('That file doesn\'t look like a Squad Pick backup')}};
+  r.readAsText(f);
+}
+function wipeData(){if(!confirm('Erase ALL Squad Pick data on this device? This cannot be undone.'))return;localStorage.removeItem(DBKEY);location.reload()}
+
+/* ================= MONETIZATION ================= */
+let chosenPlan='yearly';
+function selPlan(el,p){chosenPlan=p;document.querySelectorAll('#mPaywall .card.tap').forEach(c=>c.style.borderColor='var(--border)');el.style.borderColor='var(--accent)'}
+function payVia(method){
+  track('pay_tapped',{method,plan:chosenPlan});
+  const price=chosenPlan==='monthly'?'4.99':'39.99';
+  let url=null;
+  if(method==='paypal'){url=S.settings.paypal}
+  else if(method==='cashapp'){url=S.settings.cashtag?('https://cash.app/'+('$'+S.settings.cashtag.replace(/^\$+/,''))+'/'+price):(chosenPlan==='monthly'?S.settings.payM:S.settings.payY)}
+  else{url=chosenPlan==='monthly'?S.settings.payM:S.settings.payY}
+  if(!url){toast('Almost there — paste your payment links in Settings → Payments 💳 to take real money');closeModal('mPaywall');openSettings();return}
+  if(!/^https?:\/\//i.test(url))url='https://'+url;
+  window.open(url,'_blank');
+  setTimeout(()=>{
+    if(confirm('Finished paying in the other tab?\n\nTap OK to activate Pro on this device.')){
+      S.pro=true;S.plan=chosenPlan;save();track('purchase_complete',{plan:chosenPlan,method});
+      closeModal('mPaywall');toast('Welcome to Pro 👑');renderHome();renderProfile();
+    }
+  },1500);
+}
+function purchase(){
+  /* Demo/testing unlock — real payments go through payVia() */
+  S.pro=true;S.plan=chosenPlan;save();track('purchase_complete',{plan:chosenPlan,method:'demo'});
+  closeModal('mPaywall');toast('Pro unlocked for testing 👑');
+  renderHome();renderProfile();
+}
+function restorePurchase(){toast(S.pro?'Pro restored 👑':'No purchase found for this device');track('restore_tapped')}
+function maybeAskRating(){
+  if(S.ratingAsked)return;
+  if(S.stats.picks>=3||S.memories.length>=3){S.ratingAsked=true;save();
+    setTimeout(()=>{if(confirm('Enjoying Squad Pick? 🎯\n\nA 5-star rating helps the squad grow!')){track('rating_tapped');toast('You\'re a legend ⭐⭐⭐⭐⭐')}},600)}
+}
+function shareApp(){
+  S.stats.shares++;save();track('share_app');
+  const t='🎯 Squad Pick — the app that ends the "idk what do you wanna do" group chat loop. AI picks your hangouts. Get in!';
+  if(navigator.share){navigator.share({title:'Squad Pick',text:t}).catch(()=>{})}else{navigator.clipboard.writeText(t).then(()=>toast('Copied — send it to the group chat 📋'))}
+}
+
+/* ============ CONTACTS — links to the device's Apple/Google contacts (permission-based, nothing stored) ============ */
+const contactsSupported=()=>('contacts' in navigator&&'select' in navigator.contacts);
+async function pickContacts(){
+  if(!contactsSupported())return null;
+  try{return await navigator.contacts.select(['name','tel','email'],{multiple:true})}catch(e){return []}
+}
+async function addMembersFromContacts(){
+  if(!contactsSupported()){toast('Contact linking works on your phone (Android Chrome/Edge) — full Apple & Google contact sync ships with the app-store version. Type names for now 📇');return}
+  const sel=await pickContacts();if(!sel||!sel.length)return;
+  let added=0;
+  sel.forEach(c=>{const n=(c.name&&c.name[0])?String(c.name[0]).trim():'';if(n&&!nsMembers.includes(n)){nsMembers.push(n);added++}});
+  addNsMemberRender();if(added)toast(added+' added from your contacts 📇');
+  track('contacts_linked',{n:added});
+}
+async function inviteFriends(){
+  track('invite_tapped');
+  const text='🎯 Join my squad on Squad Pick — the app that ends the "idk what do you wanna do" loop!';
+  if(!contactsSupported()){shareApp();return}
+  const sel=await pickContacts();
+  if(!sel||!sel.length)return;
+  const tels=sel.map(c=>c.tel&&c.tel[0]).filter(Boolean);
+  const emails=sel.map(c=>c.email&&c.email[0]).filter(Boolean);
+  if(tels.length){location.href='sms:'+tels.join(',')+'?&body='+encodeURIComponent(text)}
+  else if(emails.length){location.href='mailto:'+emails.join(',')+'?subject='+encodeURIComponent('Squad Pick 🎯')+'&body='+encodeURIComponent(text)}
+  else{shareApp()}
+  S.stats.shares++;save();track('invite_sent',{n:sel.length});
+}
+
+/* ================= INIT ================= */
+function applyTheme(){document.documentElement.dataset.theme=S.settings.theme==='light'?'light':'';document.documentElement.dataset.accent=S.settings.accent||''}
+function bumpStreak(){
+  const today=new Date().toDateString();const last=S.stats.lastOpen;
+  if(last!==today){
+    const y=new Date();y.setDate(y.getDate()-1);
+    S.stats.streak=(last===y.toDateString())?(S.stats.streak||0)+1:1;
+    S.stats.lastOpen=today;save();
+  }
+}
+(function boot(){
+  applyTheme();bumpStreak();
+  if(S.user&&S.user.age){showShell(true);nav('home')}
+  else if(S.user){startOnboarding()}
+  else{nav('auth');$('view-auth').classList.add('active')}
+  track('app_open');
+})();
+</script>
+</body>
+</html>
