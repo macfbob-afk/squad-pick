@@ -32,9 +32,13 @@ const backup=localStorage.getItem('squadpick_v2'); // snapshot visitor's real da
 
 window.addEventListener('load',()=>setTimeout(run,800));
 
+let lastOpened=null;
 function run(){
   const f=document.getElementById('app');
   const W=f.contentWindow, D=f.contentDocument;
+  // neutralize native dialogs & popups for the whole run (they'd block the page)
+  W.confirm=()=>false; W.alert=()=>{}; W.prompt=()=>null;
+  W.open=u=>{lastOpened=u;return null};
   try{
     section('Boot & utilities');
     t('app exposes state hook',()=>{assert(W.__sq&&W.__sq.S,'window.__sq missing')});
@@ -112,17 +116,15 @@ function run(){
       const html=D.getElementById('mPaywall').innerHTML;
       assert(html.includes('$4.99')&&html.includes('$39.99'))});
     t('payVia builds correct Cash App link',()=>{
-      let opened=null;const orig=W.open;W.open=u=>{opened=u};const oc=W.confirm;W.confirm=()=>false;
+      lastOpened=null;
       W.__sq.S.settings.cashtag='$test';W.__sq.chosenPlan='monthly';
       W.payVia('cashapp');
-      W.open=orig;W.confirm=oc;
-      assert(opened==='https://cash.app/$test/4.99','got '+opened)});
+      assert(lastOpened==='https://cash.app/$test/4.99','got '+lastOpened)});
     t('payVia with no links routes to settings instead of opening',()=>{
-      let opened=null;const orig=W.open;W.open=u=>{opened=u};
+      lastOpened=null;
       W.__sq.S.settings.cashtag='';W.__sq.S.settings.payM='';W.__sq.S.settings.payY='';W.__sq.S.settings.paypal='';
       W.payVia('gpay');
-      W.open=orig;
-      assert(opened===null,'should not open a tab')});
+      assert(lastOpened===null,'should not open a tab')});
     t('demo purchase unlocks Pro',()=>{
       W.purchase();assert(W.__sq.S.pro===true)});
 
