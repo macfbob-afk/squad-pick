@@ -1064,7 +1064,8 @@ function bumpStreak(){
 }
 /* test hook — lets the automated suite (tests.html) inspect internal state; harmless in production */
 window.__sq={get S(){return S},get obStep(){return obStep},get currentSquad(){return currentSquad},
-  set currentSquad(v){currentSquad=v},set nsMembers(v){nsMembers=v},set chosenPlan(v){chosenPlan=v}};
+  set currentSquad(v){currentSquad=v},set nsMembers(v){nsMembers=v},set chosenPlan(v){chosenPlan=v},
+  uid:uid,esc:esc};
 
 (function boot(){
   try{applyTheme();bumpStreak()}catch(e){console.warn('boot warning',e)}

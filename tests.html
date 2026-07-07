@@ -42,8 +42,8 @@ function run(){
   try{
     section('Boot & utilities');
     t('app exposes state hook',()=>{assert(W.__sq&&W.__sq.S,'window.__sq missing')});
-    t('esc() neutralizes HTML injection',()=>{assert(W.esc('<b>&"\'')==='&lt;b&gt;&amp;&quot;&#39;',W.esc('<b>&"\''))});
-    t('uid() generates 200 unique ids',()=>{const s=new Set();for(let i=0;i<200;i++)s.add(W.uid());assert(s.size===200)});
+    t('esc() neutralizes HTML injection',()=>{assert(W.__sq.esc('<b>&"\'')==='&lt;b&gt;&amp;&quot;&#39;',W.__sq.esc('<b>&"\''))});
+    t('uid() generates 200 unique ids',()=>{const s=new Set();for(let i=0;i<200;i++)s.add(W.__sq.uid());assert(s.size===200)});
 
     section('Auth & onboarding');
     // start from a clean slate inside the app (visitor's own data was snapshotted above)
@@ -85,7 +85,7 @@ function run(){
       D.getElementById('chatText').value='<img src=x onerror=alert(1)>';W.sendMsg();
       assert(!D.querySelector('#chatScroll img'),'HTML must not become elements')});
     t('poll stores votes',()=>{
-      W.__sq.S.squads[0].chat.push({id:W.uid(),type:'poll',q:'Where Friday?',by:'Test',ts:Date.now(),options:[{t:'Bowling',votes:[]},{t:'Tacos',votes:[]}]});
+      W.__sq.S.squads[0].chat.push({id:W.__sq.uid(),type:'poll',q:'Where Friday?',by:'Test',ts:Date.now(),options:[{t:'Bowling',votes:[]},{t:'Tacos',votes:[]}]});
       W.renderChat();
       const p=W.__sq.S.squads[0].chat.find(m=>m.type==='poll');
       p.options[0].votes.push('me');W.save();
@@ -102,7 +102,7 @@ function run(){
 
     section('Memories vault');
     t('memory saves and renders',()=>{
-      W.__sq.S.memories.unshift({id:W.uid(),title:'Bowling night',squadId:W.__sq.S.squads[0].id,date:'2026-07-01',rating:'🔥 Legendary',notes:'gutter balls',photo:null,ts:Date.now()});
+      W.__sq.S.memories.unshift({id:W.__sq.uid(),title:'Bowling night',squadId:W.__sq.S.squads[0].id,date:'2026-07-01',rating:'🔥 Legendary',notes:'gutter balls',photo:null,ts:Date.now()});
       W.renderMemories();
       assert(W.__sq.S.memories.length===1&&D.getElementById('memList').textContent.includes('Bowling night'))});
     t('memory search filters',()=>{
