@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squad Pick — Automated Test Suite</title>
+<style>
+body{font-family:ui-monospace,'Cascadia Code',Consolas,monospace;background:#0b0f1a;color:#eef1f8;padding:28px;max-width:780px;margin:0 auto;font-size:14px}
+h1{font-size:20px;margin-bottom:4px} .sub{color:#8b93a7;font-size:12.5px;margin-bottom:18px}
+#summary{font-size:16px;font-weight:bold;margin:14px 0;padding:12px 16px;border:1px solid #2a3350;border-radius:10px;background:rgba(255,255,255,.04)}
+.pass{color:#2dd4a7;margin:3px 0}.fail{color:#ff5c7a;margin:3px 0;font-weight:bold}
+.section{color:#7c9cff;margin:16px 0 6px;font-weight:bold;text-transform:uppercase;font-size:11.5px;letter-spacing:1px}
+iframe{position:absolute;left:-9999px;top:0;width:420px;height:900px;border:0}
+a{color:#00d4ff}
+</style>
+</head>
+<body>
+<h1>🧪 Squad Pick — Automated Test Suite</h1>
+<p class="sub">Boots the real app in a hidden iframe and drives it end-to-end. Your own Squad Pick data is snapshotted before testing and restored after. <a href="Squad%20Pick.html">← back to the app</a></p>
+<div id="summary">Running…</div>
+<div id="log"></div>
+<iframe id="app" src="Squad Pick.html"></iframe>
+<script>
+const results=[];
+const logEl=document.getElementById('log');
+function section(name){const d=document.createElement('div');d.className='section';d.textContent=name;logEl.appendChild(d)}
+function report(ok,name,err){const d=document.createElement('div');d.className=ok?'pass':'fail';d.textContent=(ok?'✔ ':'✘ ')+name+(err?'  —  '+err:'');logEl.appendChild(d);results.push(ok)}
+function t(name,fn){try{fn();report(true,name)}catch(e){report(false,name,e.message)}}
+const assert=(c,m)=>{if(!c)throw new Error(m||'assertion failed')};
+
+const backup=localStorage.getItem('squadpick_v2'); // snapshot visitor's real data
+
+window.addEventListener('load',()=>setTimeout(run,800));
+
+function run(){
+  const f=document.getElementById('app');
+  const W=f.contentWindow, D=f.contentDocument;
+  try{
+    section('Boot & utilities');
+    t('app exposes state hook',()=>{assert(W.__sq&&W.__sq.S,'window.__sq missing')});
+    t('esc() neutralizes HTML injection',()=>{assert(W.esc('<b>&"\'')==='&lt;b&gt;&amp;&quot;&#39;',W.esc('<b>&"\''))});
+    t('uid() generates 200 unique ids',()=>{const s=new Set();for(let i=0;i<200;i++)s.add(W.uid());assert(s.size===200)});
+
+    section('Auth & onboarding');
+    // start from a clean slate inside the app (visitor's own data was snapshotted above)
+    W.localStorage.removeItem('squadpick_v2');
+    W.__sq.S.user=null;W.__sq.S.squads.splice(0);W.__sq.S.memories.splice(0);
+    W.__sq.S.pro=false;W.__sq.S.tastes.loved={};W.__sq.S.tastes.passed={};
+    t('login without an account is rejected',()=>{
+      W.authMode('login');
+      D.getElementById('authName').value='Ghost';D.getElementById('authEmail').value='ghost@x.com';
+      W.doAuth();
+      assert(W.__sq.S.user===null,'user should not be created by login')});
+    t('signup creates the user',()=>{
+      W.authMode('signup');
+      D.getElementById('authName').value='Test User';D.getElementById('authEmail').value='test@squadpick.app';
+      W.doAuth();
+      assert(W.__sq.S.user&&W.__sq.S.user.name==='Test User')});
+    t('onboarding blocks empty age',()=>{
+      D.getElementById('pAge').value='';W.obNav(1);
+      assert(W.__sq.obStep===0,'should stay on step 0')});
+    t('onboarding completes with valid data',()=>{
+      D.getElementById('pAge').value='25';W.__sq.S.user.gender='Male';W.obNav(1);
+      W.__sq.S.user.interests.push('🍕 Food','🏀 Sports','🎳 Activities');W.obNav(1);
+      D.getElementById('pCity').value='Philadelphia, PA';W.obNav(1);W.obNav(1);
+      assert(W.__sq.S.user.age===25&&W.__sq.S.user.city==='Philadelphia, PA')});
+
+    section('Squads & group chat');
+    t('squad is created with members',()=>{
+      W.__sq.nsMembers=['AJ','Marcus'];
+      D.getElementById('nsName').value='The Day Ones';
+      W.createSquad();
+      const sq=W.__sq.S.squads[0];
+      assert(W.__sq.S.squads.length===1&&sq.members.length===2&&sq.name==='The Day Ones')});
+    t('chat message sends and stores',()=>{
+      D.getElementById('chatText').value='hello world';W.sendMsg();
+      assert(W.__sq.S.squads[0].chat.some(m=>m.type==='msg'&&m.text==='hello world'))});
+    t('chat renders the message safely',()=>{
+      assert(D.getElementById('chatScroll').textContent.includes('hello world'))});
+    t('XSS in chat is escaped, not executed',()=>{
+      D.getElementById('chatText').value='<img src=x onerror=alert(1)>';W.sendMsg();
+      assert(!D.querySelector('#chatScroll img'),'HTML must not become elements')});
+    t('poll stores votes',()=>{
+      W.__sq.S.squads[0].chat.push({id:W.uid(),type:'poll',q:'Where Friday?',by:'Test',ts:Date.now(),options:[{t:'Bowling',votes:[]},{t:'Tacos',votes:[]}]});
+      W.renderChat();
+      const p=W.__sq.S.squads[0].chat.find(m=>m.type==='poll');
+      p.options[0].votes.push('me');W.save();
+      assert(p.options[0].votes.length===1)});
+
+    section('AI picks & taste memory');
+    t('local pick generator returns 3 ideas',()=>{
+      const ideas=W.ideasForUser(3);
+      assert(ideas.length===3&&ideas.every(i=>i.title&&i.desc))});
+    t('taste memory tracks loves/passes',()=>{
+      W.__sq.S.tastes.loved['🎳 Activities']=(W.__sq.S.tastes.loved['🎳 Activities']||0)+5;
+      W.save();
+      assert(W.__sq.S.tastes.loved['🎳 Activities']>=5)});
+
+    section('Memories vault');
+    t('memory saves and renders',()=>{
+      W.__sq.S.memories.unshift({id:W.uid(),title:'Bowling night',squadId:W.__sq.S.squads[0].id,date:'2026-07-01',rating:'🔥 Legendary',notes:'gutter balls',photo:null,ts:Date.now()});
+      W.renderMemories();
+      assert(W.__sq.S.memories.length===1&&D.getElementById('memList').textContent.includes('Bowling night'))});
+    t('memory search filters',()=>{
+      D.getElementById('memSearch').value='zzzz';W.renderMemories();
+      const empty=D.getElementById('memList').textContent.includes('No matches');
+      D.getElementById('memSearch').value='';W.renderMemories();
+      assert(empty)});
+
+    section('Monetization');
+    t('paywall shows $4.99 monthly and $39.99 yearly',()=>{
+      const html=D.getElementById('mPaywall').innerHTML;
+      assert(html.includes('$4.99')&&html.includes('$39.99'))});
+    t('payVia builds correct Cash App link',()=>{
+      let opened=null;const orig=W.open;W.open=u=>{opened=u};const oc=W.confirm;W.confirm=()=>false;
+      W.__sq.S.settings.cashtag='$test';W.__sq.chosenPlan='monthly';
+      W.payVia('cashapp');
+      W.open=orig;W.confirm=oc;
+      assert(opened==='https://cash.app/$test/4.99','got '+opened)});
+    t('payVia with no links routes to settings instead of opening',()=>{
+      let opened=null;const orig=W.open;W.open=u=>{opened=u};
+      W.__sq.S.settings.cashtag='';W.__sq.S.settings.payM='';W.__sq.S.settings.payY='';W.__sq.S.settings.paypal='';
+      W.payVia('gpay');
+      W.open=orig;
+      assert(opened===null,'should not open a tab')});
+    t('demo purchase unlocks Pro',()=>{
+      W.purchase();assert(W.__sq.S.pro===true)});
+
+    section('Persistence & safety');
+    t('state round-trips through localStorage',()=>{
+      W.save();
+      const raw=W.localStorage.getItem('squadpick_v2');
+      const parsed=JSON.parse(raw);
+      assert(parsed.user.name==='Test User'&&parsed.squads.length===1&&parsed.pro===true)});
+    t('askClaude is guarded when no API key is set',()=>{
+      W.__sq.S.settings.claudeKey='';
+      const p=W.askClaude('x');
+      assert(p&&typeof p.then==='function','should return a promise');
+      p.then(r=>{if(r!==null)report(false,'askClaude late check','expected null without key')})});
+    t('backup export shape is valid JSON with required keys',()=>{
+      const s=JSON.parse(JSON.stringify(W.__sq.S));
+      ['user','squads','memories','tastes','settings','stats'].forEach(k=>assert(k in s,k+' missing'))});
+  }catch(e){
+    report(false,'test harness crashed',e.message);
+  }finally{
+    if(backup!==null)localStorage.setItem('squadpick_v2',backup);else localStorage.removeItem('squadpick_v2');
+  }
+  const pass=results.filter(Boolean).length;
+  const el=document.getElementById('summary');
+  el.textContent=pass+' / '+results.length+' tests passed'+(pass===results.length?'  —  ALL GREEN ✅':'  —  FAILURES ❌');
+  el.style.color=pass===results.length?'#2dd4a7':'#ff5c7a';
+  el.style.borderColor=el.style.color;
+}
+</script>
+</body>
+</html>

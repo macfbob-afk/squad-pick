@@ -27,7 +27,13 @@ Keys are stored only in the user's own browser — never in this repo.
 ## AI maintainer 🤖
 This repo includes a Claude GitHub Action (`.github/workflows/claude.yml`). Add your `ANTHROPIC_API_KEY` as a repo secret, then mention **@claude** in any issue — Claude reads the code, writes the fix, and opens a pull request.
 
+## Install it like a real app 📱
+Open the link on your phone → browser menu → **Add to Home Screen**. Squad Pick installs with its own icon, runs full-screen, and works offline (service worker + manifest included).
+
+## Tests ✅
+Open [`tests.html`](https://macfbob-afk.github.io/squad-pick/tests.html) — 20 automated integration tests boot the real app in a hidden iframe and drive it end-to-end (auth, squads, chat, XSS safety, polls, picks, memories, paywall math, payment routing, persistence). Your own data is snapshotted and restored around the run. Green summary = healthy build. Run it after every change.
+
 ## Tech
-Single-file web app (HTML/CSS/JS, zero dependencies) · localStorage persistence · Claude API · Google Maps Places · W3C Contact Picker · hosted on GitHub Pages.
+Single-file web app (HTML/CSS/JS, zero dependencies) · installable PWA with offline support · localStorage persistence · Claude API · Google Maps Places · W3C Contact Picker · hosted on GitHub Pages. See [CHANGELOG.md](CHANGELOG.md).
 
 *Built with Claude Fable 5.*

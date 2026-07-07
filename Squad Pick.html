@@ -6,6 +6,15 @@
 <meta name="theme-color" content="#0b0f1a">
 <title>Squad Pick — Decide together. Hang out more.</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="description" content="Stop the 'idk, what do you wanna do?' loop. AI picks the perfect hangout for your crew.">
+<meta property="og:title" content="Squad Pick — AI picks your crew's next hangout">
+<meta property="og:description" content="Group chats, polls, AI picks, and a memories vault. Decide together. Hang out more.">
+<meta property="og:image" content="https://macfbob-afk.github.io/squad-pick/social-card.png">
+<meta property="og:url" content="https://macfbob-afk.github.io/squad-pick/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 :root{
   --bg:#0b0f1a; --bg2:#101627; --card:rgba(255,255,255,.055); --card2:rgba(255,255,255,.09);
@@ -146,7 +155,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:1
     <div class="logo">🎯 <span class="grad-text">Squad Pick</span></div>
     <div class="row" style="gap:8px">
       <span id="proBadge" class="badge">FREE</span>
-      <button class="iconBtn" style="width:38px;height:38px;font-size:16px" onclick="openSettings()">⚙️</button>
+      <button class="iconBtn" style="width:38px;height:38px;font-size:16px" onclick="openSettings()" aria-label="Settings">⚙️</button>
     </div>
   </div>
 
@@ -160,7 +169,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:1
     <div class="card" style="padding:20px">
       <div class="seg"><button id="segSignup" class="on" onclick="authMode('signup')">Sign up</button><button id="segLogin" onclick="authMode('login')">Log in</button></div>
       <label>Your name</label><input id="authName" placeholder="e.g. Bob" autocomplete="name">
-      <label>Email</label><input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email">
+      <label>Email</label><input id="authEmail" type="email" placeholder="you@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')doAuth()">
       <div style="margin-top:20px"><button class="btn" onclick="doAuth()">Continue →</button></div>
       <p class="sub" style="text-align:center;margin-top:12px;font-size:12px">Your data stays on this device until you connect a backend.</p>
     </div>
@@ -250,9 +259,9 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:1
     <div id="sqChatPane">
       <div id="chatScroll"></div>
       <div id="chatInputWrap">
-        <button class="iconBtn" title="Start a poll" onclick="openPollModal()">📊</button>
+        <button class="iconBtn" title="Start a poll" aria-label="Start a poll" onclick="openPollModal()">📊</button>
         <input id="chatText" placeholder="Message… (@ai to ask the AI)" onkeydown="if(event.key==='Enter')sendMsg()">
-        <button class="iconBtn grad" onclick="sendMsg()">➤</button>
+        <button class="iconBtn grad" onclick="sendMsg()" aria-label="Send message">➤</button>
       </div>
     </div>
     <div id="sqPlanPane" style="display:none">
@@ -306,7 +315,7 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:1
     <div class="card tap" onclick="inviteFriends()"><div class="spread"><div class="row"><span style="font-size:22px">📇</span><div><h3>Invite from contacts</h3><p class="sub" style="font-size:12px">Links to your Apple/Google contacts (with permission) to invite the crew</p></div></div><span>→</span></div></div>
     <div class="card tap" onclick="shareApp()"><div class="spread"><div class="row"><span style="font-size:22px">📣</span><div><h3>Share Squad Pick</h3><p class="sub" style="font-size:12px">Invite friends — grow the movement</p></div></div><span>→</span></div></div>
     <div class="card tap" onclick="logout()"><div class="spread"><div class="row"><span style="font-size:22px">🚪</span><h3>Log out</h3></div><span>→</span></div></div>
-    <p class="sub" style="text-align:center;margin-top:16px;font-size:11.5px">Squad Pick v2.0 · built with Claude Fable 5</p>
+    <p class="sub" style="text-align:center;margin-top:16px;font-size:11.5px">Squad Pick v2.1 · built with Claude Fable 5 · <a href="tests.html" style="color:inherit">tests</a></p>
   </div>
 
   <!-- bottom nav -->
@@ -429,6 +438,18 @@ label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:1
   <div style="margin-top:20px"><button class="btn" onclick="savePersonalization()">Save</button></div>
 </div></div>
 
+<div class="modal-bg" id="mSquadOpts"><div class="modal"><div class="grab"></div><button class="x" onclick="closeModal('mSquadOpts')" aria-label="Close">✕</button>
+  <h2 id="soTitle">Squad options</h2>
+  <label>Add member</label>
+  <div class="row"><input id="soMember" placeholder="Friend's name" onkeydown="if(event.key==='Enter')soAddMember()"><button class="iconBtn" onclick="soAddMember()" aria-label="Add member">＋</button></div>
+  <button class="btn ghost small" style="margin-top:10px" onclick="soAddFromContacts()">📇 Add from your contacts</button>
+  <label>Members (tap to remove)</label><div class="chips" id="soMembers"></div>
+  <label>Rename squad</label>
+  <div class="row"><input id="soRename"><button class="iconBtn" onclick="soRename()" aria-label="Save name">✓</button></div>
+  <div class="hr"></div>
+  <button class="btn danger" onclick="soDelete()">🗑 Delete squad</button>
+</div></div>
+
 <div class="toast" id="toast"></div>
 <script>
 /* ================= STATE ================= */
@@ -488,7 +509,11 @@ function authMode(m){mode=m;$('segSignup').classList.toggle('on',m==='signup');$
 function doAuth(){
   const name=$('authName').value.trim(),email=$('authEmail').value.trim();
   if(!name||!email.includes('@'))return toast('Enter your name and a valid email');
-  if(mode==='login'&&S.user&&S.user.email===email){toast('Welcome back, '+S.user.name+'!');enterApp();return}
+  if(mode==='login'){
+    if(S.user&&S.user.email.toLowerCase()===email.toLowerCase()){toast('Welcome back, '+S.user.name+'!');enterApp();return}
+    toast(S.user?'No match — this device has an account for '+S.user.email:'No account on this device yet — use Sign up');return;
+  }
+  if(S.user&&(S.squads.length||S.memories.length)&&!confirm('This device already has Squad Pick data for '+S.user.name+'.\n\nStart fresh anyway? (Back up first in Settings if unsure.)'))return;
   S.user={id:uid(),name,email,age:null,gender:'',avatar:'😎',interests:[],budget:'$$ Moderate',vibe:'🎲 Surprise me',diet:'',city:'',createdAt:Date.now()};
   save();track('sign_up',{email});subscribeToLoops(email,name);
   startOnboarding();
@@ -596,11 +621,35 @@ function sqTab(t){
   if(t==='mems')renderSquadMems(); if(t==='chat')renderChat();
 }
 function openSquadOpts(){
+  const sq=getSquad();if(!sq)return;
+  $('soTitle').textContent=sq.emoji+' '+sq.name;
+  $('soMember').value='';$('soRename').value=sq.name;
+  const el=$('soMembers');el.innerHTML='';
+  if(!sq.members.length){el.innerHTML='<span class="sub">Just you so far.</span>'}
+  sq.members.forEach((m,i)=>{const c=document.createElement('span');c.className='chip';c.textContent=m.emoji+' '+m.name+' ✕';
+    c.onclick=()=>{if(confirm('Remove '+m.name+' from the squad?')){sq.members.splice(i,1);save();openSquad(sq.id);openSquadOpts()}};el.appendChild(c)});
+  openModal('mSquadOpts');
+}
+function soAddMember(){
+  const sq=getSquad();const n=$('soMember').value.trim();if(!n)return;
+  sq.members.push({id:uid(),name:n,emoji:AVATARS[Math.floor(Math.random()*AVATARS.length)]});
+  save();openSquad(sq.id);openSquadOpts();toast(n+' added 👋');
+}
+async function soAddFromContacts(){
+  if(!contactsSupported()){toast('Contact linking works on your phone (Android Chrome/Edge) — type the name for now 📇');return}
+  const sel=await pickContacts();if(!sel||!sel.length)return;
+  const sq=getSquad();let added=0;
+  sel.forEach(c=>{const n=(c.name&&c.name[0])?String(c.name[0]).trim():'';if(n&&!sq.members.some(m=>m.name===n)){sq.members.push({id:uid(),name:n,emoji:AVATARS[Math.floor(Math.random()*AVATARS.length)]});added++}});
+  save();openSquad(sq.id);openSquadOpts();if(added)toast(added+' added from contacts 📇');
+}
+function soRename(){
+  const sq=getSquad();const n=$('soRename').value.trim();if(!n)return;
+  sq.name=n;save();openSquad(sq.id);openSquadOpts();toast('Renamed ✓');
+}
+function soDelete(){
   const sq=getSquad();
-  const choice=prompt(`Squad options for "${sq.name}":\n1 = Add member\n2 = Rename squad\n3 = Delete squad\n\nType a number:`);
-  if(choice==='1'){const n=prompt('New member name:');if(n){sq.members.push({id:uid(),name:n.trim(),emoji:AVATARS[Math.floor(Math.random()*AVATARS.length)]});save();openSquad(sq.id);toast(n+' added 👋')}}
-  else if(choice==='2'){const n=prompt('New squad name:',sq.name);if(n){sq.name=n.trim();save();openSquad(sq.id)}}
-  else if(choice==='3'){if(confirm('Delete "'+sq.name+'" and its chat? Memories stay in the vault.')){S.squads=S.squads.filter(s=>s.id!==sq.id);save();nav('squads');toast('Squad deleted')}}
+  if(!confirm('Delete "'+sq.name+'" and its chat? Memories stay in the vault.'))return;
+  S.squads=S.squads.filter(s=>s.id!==sq.id);save();closeModal('mSquadOpts');nav('squads');toast('Squad deleted');
 }
 
 /* ================= CHAT ================= */
@@ -796,7 +845,8 @@ function renderPlacesFallback(){
   const samples={restaurant:['Tony\'s Corner Slice','La Fonda Taqueria','Golden Bowl Ramen'],cafe:['Daily Grind Coffee','Maple & Fern Café','Sunrise Espresso Bar'],bowling_alley:['Strike Zone Lanes','Retro Arcade & Games','Puzzle Break Escape Rooms'],park:['Riverside Park','Lakeview Trailhead','Summit Overlook'],movie_theater:['Grand 12 Cinemas','The Indie Screen','Starlight Drive-In'],bakery:['Frosted Dreams','Scoops Ice Cream Co.','Butter & Crumb'],gym:['Iron Temple Gym','Ascent Climbing Co.','FlowState Yoga'],shopping_mall:['Central City Mall','The Promenade','Old Town Market']};
   (samples[discCat]||[]).forEach((n,i)=>{
     const d=document.createElement('div');d.className='card';
-    d.innerHTML=`<div class="spread"><div class="row"><div class="placeImg">${catLabel[0]}</div><div><h3>${n}</h3><p class="sub" style="font-size:12px">⭐ ${(4.2+i*0.2).toFixed(1)} · sample</p></div></div></div>`;
+    d.innerHTML=`<div class="spread"><div class="row"><div class="placeImg">${catLabel[0]}</div><div><h3>${n}</h3><p class="sub" style="font-size:12px">⭐ ${(4.2+i*0.2).toFixed(1)} · sample</p></div></div></div><div class="row" style="margin-top:10px"><button class="btn small" style="flex:1">📊 Poll the squad</button></div>`;
+    d.querySelector('.btn.small').onclick=()=>pollPlace(n);
     list.appendChild(d);
   });
 }
@@ -1012,8 +1062,15 @@ function bumpStreak(){
     S.stats.lastOpen=today;save();
   }
 }
+/* test hook — lets the automated suite (tests.html) inspect internal state; harmless in production */
+window.__sq={get S(){return S},get obStep(){return obStep},get currentSquad(){return currentSquad},
+  set currentSquad(v){currentSquad=v},set nsMembers(v){nsMembers=v},set chosenPlan(v){chosenPlan=v}};
+
 (function boot(){
-  applyTheme();bumpStreak();
+  try{applyTheme();bumpStreak()}catch(e){console.warn('boot warning',e)}
+  document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open'))});
+  if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
   if(S.user&&S.user.age){showShell(true);nav('home')}
   else if(S.user){startOnboarding()}
   else{nav('auth');$('view-auth').classList.add('active')}
