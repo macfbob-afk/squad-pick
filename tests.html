@@ -63,6 +63,12 @@ function run(){
     t('onboarding blocks empty age',()=>{
       D.getElementById('pAge').value='';W.obNav(1);
       assert(W.__sq.obStep===0,'should stay on step 0')});
+    t('under-13 signup is blocked (COPPA)',()=>{
+      D.getElementById('pAge').value='12';W.obNav(1);
+      assert(W.__sq.obStep===0&&W.__sq.S.user.age===null,'12-year-old should be blocked')});
+    t('signup screen links Terms & Privacy',()=>{
+      const html=D.getElementById('view-auth').innerHTML;
+      assert(html.includes('terms.html')&&html.includes('privacy.html'))});
     t('onboarding completes with valid data',()=>{
       D.getElementById('pAge').value='25';W.__sq.S.user.gender='Male';W.obNav(1);
       W.__sq.S.user.interests.push('🍕 Food','🏀 Sports','🎳 Activities');W.obNav(1);
@@ -115,6 +121,12 @@ function run(){
     t('paywall shows $4.99 monthly and $39.99 yearly',()=>{
       const html=D.getElementById('mPaywall').innerHTML;
       assert(html.includes('$4.99')&&html.includes('$39.99'))});
+    t('paywall discloses automatic renewal (FTC/ARL)',()=>{
+      const html=D.getElementById('mPaywall').innerHTML;
+      assert(html.includes('renew automatically')&&html.includes('Cancel anytime'))});
+    t('paywall contains no unsubstantiated rating claims',()=>{
+      const html=D.getElementById('mPaywall').innerHTML;
+      assert(!html.includes('4.8')&&!html.includes('50K'),'no fake social proof')});
     t('payVia builds correct Cash App link',()=>{
       lastOpened=null;
       W.__sq.S.settings.cashtag='$test';W.__sq.chosenPlan='monthly';

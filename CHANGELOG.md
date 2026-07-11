@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.1.1 — 2026-07-06
+**Legal hardening.**
+- Added Terms of Service (terms.html) and Privacy Policy (privacy.html), linked from signup, paywall, and profile.
+- Signup consent line; 13+ age gate enforced in onboarding (COPPA).
+- Paywall: automatic-renewal disclosure and cancellation info (FTC negative-option / state auto-renewal laws); removed unsubstantiated rating/social-proof claims (FTC advertising rules).
+- AI-suggestion judgment disclaimer; copyright notice; 5 new legal-compliance tests (28 total).
+
 ## v2.1 — 2026-07-06
 **Perfection pass: PWA, tests, and polish.**
 

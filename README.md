@@ -33,6 +33,9 @@ Open the link on your phone → browser menu → **Add to Home Screen**. Squad P
 ## Tests ✅
 Open [`tests.html`](https://macfbob-afk.github.io/squad-pick/tests.html) — 20 automated integration tests boot the real app in a hidden iframe and drive it end-to-end (auth, squads, chat, XSS safety, polls, picks, memories, paywall math, payment routing, persistence). Your own data is snapshotted and restored around the run. Green summary = healthy build. Run it after every change.
 
+## Legal ⚖️
+[Terms of Service](https://macfbob-afk.github.io/squad-pick/terms.html) · [Privacy Policy](https://macfbob-afk.github.io/squad-pick/privacy.html). Users must be 13+. All user data stays on the user's own device — no server, no data collection. Subscriptions disclose automatic renewal and cancel online through the payment provider. © 2026 Squad Pick — all rights reserved; this code is published for transparency and personal use, not for resale or redistribution.
+
 ## Tech
 Single-file web app (HTML/CSS/JS, zero dependencies) · installable PWA with offline support · localStorage persistence · Claude API · Google Maps Places · W3C Contact Picker · hosted on GitHub Pages. See [CHANGELOG.md](CHANGELOG.md).
 
